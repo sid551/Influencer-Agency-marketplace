@@ -17,7 +17,6 @@ import { CREATOR_COLLABORATION_TRANSITIONS } from "@/types/collaboration.types";
 interface BusinessJoin {
   company_name: string | null;
   industry?: string | null;
-  avatar_url: string | null;
 }
 
 type CollaborationRow = Omit<Collaboration, "deliverables"> & {
@@ -87,7 +86,7 @@ export async function listOwnCollaborations(
     .from("collaborations")
     .select(
       `*,
-      business_profiles ( company_name, industry, avatar_url ),
+      business_profiles ( company_name, industry ),
       campaigns ( id, title )`,
     )
     .eq("creator_profile_id", userId)
@@ -108,8 +107,7 @@ export async function listOwnCollaborations(
         ? {
             profile_id: collaboration.business_profile_id,
             company_name: business_profiles.company_name,
-            avatar_url: business_profiles.avatar_url,
-          }
+                      }
         : null,
       campaign: campaigns,
       conversation_id: conversations.get(row.id) ?? null,
@@ -127,7 +125,7 @@ export async function getCollaborationForCreator(
     .from("collaborations")
     .select(
       `*,
-      business_profiles ( company_name, industry, avatar_url ),
+      business_profiles ( company_name, industry ),
       campaigns ( id, title )`,
     )
     .eq("id", collaborationId)
@@ -148,8 +146,7 @@ export async function getCollaborationForCreator(
       ? {
           profile_id: collaboration.business_profile_id,
           company_name: business_profiles.company_name,
-          avatar_url: business_profiles.avatar_url,
-        }
+                  }
       : null,
     campaign: campaigns,
     conversation_id: conversations.get(row.id) ?? null,
@@ -166,7 +163,7 @@ export async function listIncomingInvitations(
     .from("collaboration_requests")
     .select(
       `*,
-      business_profiles ( company_name, industry, avatar_url ),
+      business_profiles ( company_name, industry ),
       campaigns ( id, title )`,
     )
     .eq("creator_profile_id", userId)
@@ -183,8 +180,7 @@ export async function listIncomingInvitations(
         ? {
             company_name: business_profiles.company_name,
             industry: business_profiles.industry ?? null,
-            avatar_url: business_profiles.avatar_url,
-          }
+                      }
         : null,
       campaign: campaigns,
     };

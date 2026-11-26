@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,10 +75,13 @@ export function PortfolioCard({ item }: { item: PortfolioItem }) {
     <Card className="overflow-hidden">
       <CardContent className="p-0 relative aspect-video overflow-hidden bg-muted">
         {item.media_type === "image" ? (
-          <img
+          <Image
             src={item.media_url}
             alt={item.title}
-            className="size-full object-cover"
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">

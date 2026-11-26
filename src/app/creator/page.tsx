@@ -132,15 +132,15 @@ async function CreatorDashboard() {
           <CardHeader>
             <CardTitle>Next steps</CardTitle>
             <CardDescription>
-              Campaign discovery, applications and messaging arrive in
-              later phases.
+              Browse campaigns, apply to collaborations, and keep up with your
+              messages.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <SparklesIcon className="size-3.5 shrink-0 text-primary" />
-              Your account is fully set up — you&apos;re ready for
-              collaborations as soon as campaigns go live.
+              Your account is ready — discover campaigns that match your niche
+              and apply when you find a good fit.
             </p>
           </CardContent>
         </Card>

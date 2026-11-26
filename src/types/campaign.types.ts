@@ -38,6 +38,24 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+/** Decisions a business may make on an application. Mirrors the database
+ *  trigger in migration 0002, which remains the final authority. */
+export type BusinessApplicationDecision = Extract<
+  ApplicationStatus,
+  "shortlisted" | "accepted" | "rejected"
+>;
+
+export const BUSINESS_APPLICATION_TRANSITIONS: Record<
+  ApplicationStatus,
+  BusinessApplicationDecision[]
+> = {
+  pending: ["shortlisted", "accepted", "rejected"],
+  shortlisted: ["accepted", "rejected"],
+  accepted: [],
+  rejected: [],
+  withdrawn: [],
+};
+
 export const COLLABORATION_REQUEST_STATUSES = [
   "pending",
   "accepted",

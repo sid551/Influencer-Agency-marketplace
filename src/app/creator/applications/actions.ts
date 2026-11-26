@@ -14,6 +14,7 @@ import {
 import {
   campaignApplicationSchema,
 } from "@/lib/validations/campaign";
+import { uuidSchema } from "@/lib/validations/ids";
 
 export interface CampaignApplicationActionState {
   ok: boolean;
@@ -46,6 +47,11 @@ export async function applyToCampaign(
   _prev: CampaignApplicationActionState,
   formData: FormData,
 ): Promise<CampaignApplicationActionState> {
+  const id = uuidSchema.safeParse(campaignId);
+  if (!id.success) {
+    return { ...EMPTY_STATE, message: "Invalid campaign." };
+  }
+
   const raw = Object.fromEntries(formData.entries());
 
   const parsed = campaignApplicationSchema.safeParse(raw);
@@ -63,7 +69,7 @@ export async function applyToCampaign(
     };
   }
 
-  const alreadyApplied = await hasAppliedToCampaign(user.id, campaignId);
+  const alreadyApplied = await hasAppliedToCampaign(user.id, id.data);
   if (alreadyApplied) {
     return {
       ...EMPTY_STATE,
@@ -72,7 +78,7 @@ export async function applyToCampaign(
   }
 
   const result = await createApplication({
-    campaignId,
+    campaignId: id.data,
     creatorProfileId: user.id,
     proposal: parsed.data.proposal,
     whySuitable: parsed.data.why_suitable || null,
