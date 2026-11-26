@@ -7,7 +7,7 @@
 -- Demo logins (after Phase 3 auth UI exists):
 --   mia@example.com   / password123  (creator, onboarded)
 --   rahul@example.com / password123  (creator, partial onboarding)
---   acme@example.com  / password123  (business — UI not built yet)
+--   acme@example.com  / password123  (business — onboarding complete)
 --
 -- Idempotent: safe to re-run (uses fixed UUIDs + ON CONFLICT).
 -- =============================================================
@@ -108,7 +108,7 @@ sustainable workout habits.',
 where profile_id = '22222222-2222-4222-8222-222222222222';
 
 -- -------------------------------------------------------------
--- Business profile (structural support for campaigns)
+-- Business profile used by the demo campaigns
 -- -------------------------------------------------------------
 insert into public.business_profiles
   (profile_id, company_name, website, description, industry,
@@ -325,7 +325,7 @@ payment on approval.',
 on conflict (id) do nothing;
 
 -- -------------------------------------------------------------
--- Conversation + messages for C1 (last message unread)
+-- Conversation + messages for C1 (one unread on each side)
 -- -------------------------------------------------------------
 insert into public.conversations
   (id, collaboration_id, created_by, created_at, updated_at)
@@ -334,7 +334,7 @@ values
    '10101010-0000-4000-8000-000000000001',
    '33333333-3333-4333-8333-333333333333',
    now() - interval '2 days',
-   now() - interval '1 hour')
+   now() - interval '30 minutes')
 on conflict (id) do nothing;
 
 insert into public.messages
@@ -363,11 +363,16 @@ the deliverables tab.',
    '33333333-3333-4333-8333-333333333333',
    'Quick reminder: the reel deadline is in 7 days. Let me know
 if you need anything!',
-   null, now() - interval '1 hour')
+   null, now() - interval '1 hour'),
+  ('40404040-0000-4000-8000-000000000005',
+   '30303030-0000-4000-8000-000000000001',
+   '11111111-1111-4111-8111-111111111111',
+   'Got it — I will send the first cut by Tuesday.',
+   null, now() - interval '30 minutes')
 on conflict (id) do nothing;
 
 -- -------------------------------------------------------------
--- Notifications (one read, two unread)
+-- Notifications (creator: one read, two unread; business: two unread)
 -- -------------------------------------------------------------
 insert into public.notifications
   (id, profile_id, type, title, body, link_path, read_at, created_at)
@@ -385,7 +390,7 @@ values
    'message',
    'New message from Acme Drinks Co.',
    'Quick reminder: the reel deadline is in 7 days.',
-   '/creator/messages',
+   '/creator/messages/30303030-0000-4000-8000-000000000001',
    null,
    now() - interval '1 hour'),
   ('50505050-0000-4000-8000-000000000003',
@@ -395,7 +400,23 @@ values
    'Instagram reel for Summer Fashion Reel Campaign is due on 2026-12-05.',
    '/creator/collaborations',
    null,
-   now() - interval '2 hours')
+   now() - interval '2 hours'),
+   ('50505050-0000-4000-8000-000000000004',
+    '33333333-3333-4333-8333-333333333333',
+    'application_status',
+    'New application received',
+    'Rahul Verma applied to Summer Fashion Reel Campaign.',
+    '/business/applications/eeeeeeee-0000-4000-8000-000000000002',
+    null,
+    now() - interval '3 hours'),
+   ('50505050-0000-4000-8000-000000000005',
+    '33333333-3333-4333-8333-333333333333',
+    'message',
+    'New message from Mia Chen',
+    'Got it — I will send the first cut by Tuesday.',
+    '/business/messages/30303030-0000-4000-8000-000000000001',
+    null,
+    now() - interval '30 minutes')
 on conflict (id) do nothing;
 
 -- -------------------------------------------------------------

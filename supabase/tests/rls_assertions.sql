@@ -47,7 +47,7 @@ declare
     "business_profiles":1,"social_accounts":3,"portfolio_items":3,
     "creator_services":3,"campaigns":3,"campaign_applications":3,
     "collaboration_requests":1,"collaborations":2,"conversations":1,
-    "messages":4,"notifications":3,"verifications":4,"reviews":2}'::jsonb;
+    "messages":5,"notifications":5,"verifications":4,"reviews":2}'::jsonb;
   v_pair record;
   v_count int;
 begin
@@ -121,7 +121,7 @@ begin
   if v_count <> 1 then raise exception 'FAIL: collaborations = %', v_count; end if;
 
   select count(*) into v_count from public.messages;
-  if v_count <> 4 then raise exception 'FAIL: messages = %', v_count; end if;
+  if v_count <> 5 then raise exception 'FAIL: messages = %', v_count; end if;
 
   select count(*) into v_count from public.notifications;
   if v_count <> 3 then raise exception 'FAIL: notifications = %', v_count; end if;
@@ -370,6 +370,24 @@ begin
     raise exception 'FAIL: business sees % applications, expected 3', v_count;
   end if;
   raise notice 'PASS: business sees own campaigns and their applications';
+end $$;
+
+-- D1b. Business inbox: notifications and unread messages are scoped to it
+do $$
+declare v_count int;
+begin
+  select count(*) into v_count from public.notifications;
+  if v_count <> 2 then
+    raise exception 'FAIL: business sees % notifications, expected 2', v_count;
+  end if;
+
+  select count(*) into v_count from public.messages
+   where read_at is null
+     and sender_profile_id <> '33333333-3333-4333-8333-333333333333';
+  if v_count <> 1 then
+    raise exception 'FAIL: business unread messages = %, expected 1', v_count;
+  end if;
+  raise notice 'PASS: business notifications and unread messages are scoped';
 end $$;
 
 -- D2. Business may shortlist a pending application

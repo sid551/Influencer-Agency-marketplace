@@ -28,6 +28,11 @@ export interface CreatorContext {
   profile: Profile;
 }
 
+export interface BusinessContext {
+  user: AuthUser;
+  profile: Profile;
+}
+
 /**
  * Validate the session cookie against Supabase Auth (network check).
  * Memoized per render pass with React's cache().
@@ -55,17 +60,32 @@ export const getProfile = cache(
  * Signed-in creator with their profile, or a redirect:
  *   - no session            → /login
  *   - profile row missing   → /login (account state is broken; re-auth)
- *   - business / admin role → /   (the business side is not built yet)
+ *   - business / admin role → their own home page
  */
 export async function requireCreator(): Promise<CreatorContext> {
   const user = await requireUser();
   const profile = await getProfile(user.id);
   if (!profile) redirect("/login");
-  if (profile.role !== "creator") redirect("/");
+  if (profile.role !== "creator") redirect(homePathForRole(profile.role));
+  return { user, profile };
+}
+
+/**
+ * Signed-in business with their profile, or a redirect to the caller's
+ * own home page on a role mismatch. Pages still re-verify the session
+ * when loading data; services rely on RLS for row-level ownership.
+ */
+export async function requireBusiness(): Promise<BusinessContext> {
+  const user = await requireUser();
+  const profile = await getProfile(user.id);
+  if (!profile) redirect("/login");
+  if (profile.role !== "business") redirect(homePathForRole(profile.role));
   return { user, profile };
 }
 
 /** Landing path for a role after login / signup / password reset. */
 export function homePathForRole(role: ProfileRole | null | undefined): string {
-  return role === "creator" ? "/creator" : "/";
+  if (role === "creator") return "/creator";
+  if (role === "business") return "/business";
+  return "/";
 }

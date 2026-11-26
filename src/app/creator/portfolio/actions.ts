@@ -7,6 +7,7 @@ import {
   removeOwnPortfolioItem,
 } from "@/services/portfolio.service";
 import { portfolioItemSchema } from "@/lib/validations/portfolio";
+import { uuidSchema } from "@/lib/validations/ids";
 
 export interface PortfolioActionState {
   ok: boolean;
@@ -65,14 +66,14 @@ export async function deletePortfolioItem(
   _prev: PortfolioActionState,
   formData: FormData,
 ): Promise<PortfolioActionState> {
-  const itemId = formData.get("itemId");
-  if (typeof itemId !== "string" || itemId.length === 0) {
+  const itemId = uuidSchema.safeParse(formData.get("itemId"));
+  if (!itemId.success) {
     return { ...EMPTY_STATE, message: "Item not found." };
   }
 
   const { user } = await requireCreator();
 
-  const result = await removeOwnPortfolioItem(user.id, itemId);
+  const result = await removeOwnPortfolioItem(user.id, itemId.data);
   if (!result.ok) {
     return { ...EMPTY_STATE, message: result.message };
   }

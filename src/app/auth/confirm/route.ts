@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { emailOtpTypeSchema, sanitizeNextPath } from "@/lib/validations/auth";
+import { homePathForRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import type { ProfileRole } from "@/types/creator.types";
 
 /**
  * Email confirmation / password-reset landing route.
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
       .select("role")
       .eq("id", data.user.id)
       .maybeSingle();
-    defaultPath = profile?.role === "creator" ? "/creator" : "/";
+    defaultPath = homePathForRole(profile?.role as ProfileRole | undefined);
   }
 
   return NextResponse.redirect(`${origin}${next ?? defaultPath}`);

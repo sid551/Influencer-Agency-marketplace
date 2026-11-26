@@ -1,0 +1,54 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import { requireBusiness } from "@/lib/auth/session";
+import { applicationDecisionSchema } from "@/lib/validations/business";
+import { uuidSchema } from "@/lib/validations/ids";
+import { reviewBusinessApplication } from "@/services/business-application.service";
+import type { BusinessApplicationDecision } from "@/types/campaign.types";
+import {
+  EMPTY_FORM_STATE,
+  type FormActionState,
+} from "@/types/action-state.types";
+
+const DECISION_LABELS: Record<BusinessApplicationDecision, string> = {
+  shortlisted: "Application shortlisted.",
+  accepted: "Application accepted.",
+  rejected: "Application declined.",
+};
+
+/** Review an application to one of the business's own campaigns. */
+export async function reviewApplicationAction(
+  applicationId: string,
+  decision: BusinessApplicationDecision,
+  _prev: FormActionState,
+  _formData: FormData,
+): Promise<FormActionState> {
+  void _prev;
+  void _formData;
+  const id = uuidSchema.safeParse(applicationId);
+  const parsedDecision = applicationDecisionSchema.safeParse(decision);
+  if (!id.success || !parsedDecision.success) {
+    return { ...EMPTY_FORM_STATE, message: "Invalid request." };
+  }
+
+  const { user } = await requireBusiness();
+  const result = await reviewBusinessApplication(
+    user.id,
+    id.data,
+    parsedDecision.data,
+  );
+  if (!result.ok) {
+    return { ...EMPTY_FORM_STATE, message: result.message };
+  }
+
+  revalidatePath("/business");
+  revalidatePath("/business/applications");
+  revalidatePath(`/business/applications/${id.data}`);
+  return {
+    ok: true,
+    message: DECISION_LABELS[parsedDecision.data],
+    fieldErrors: {},
+  };
+}

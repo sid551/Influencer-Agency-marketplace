@@ -36,6 +36,23 @@ export const CREATOR_COLLABORATION_TRANSITIONS: Record<
   disputed: [],
 };
 
+/** Status changes a business is allowed to request. The database trigger
+ *  in migration 0002 remains the final authority for these transitions. */
+export const BUSINESS_COLLABORATION_TRANSITIONS: Record<
+  CollaborationStatus,
+  CollaborationStatus[]
+> = {
+  negotiating: ["agreement_pending", "cancelled"],
+  agreement_pending: ["negotiating", "active", "cancelled"],
+  active: ["disputed"],
+  submitted: ["approved", "revision_requested", "disputed"],
+  revision_requested: ["disputed"],
+  approved: ["completed", "disputed"],
+  completed: [],
+  cancelled: [],
+  disputed: [],
+};
+
 export const DELIVERABLE_STATUSES = ["pending", "submitted", "approved"] as const;
 export type DeliverableStatus = (typeof DELIVERABLE_STATUSES)[number];
 
@@ -81,7 +98,6 @@ export interface CollaborationWithParties extends Collaboration {
   business: {
     profile_id: string;
     company_name: string | null;
-    avatar_url: string | null;
   } | null;
 }
 
@@ -120,7 +136,6 @@ export interface CollaborationInvitation extends CollaborationRequest {
   business: {
     company_name: string | null;
     industry: string | null;
-    avatar_url: string | null;
   } | null;
   campaign: { id: string; title: string } | null;
 }
@@ -136,7 +151,6 @@ export interface ConversationListItem {
     status: CollaborationStatus;
     business: {
       company_name: string | null;
-      avatar_url: string | null;
     } | null;
     campaign: { id: string; title: string } | null;
   } | null;
@@ -152,7 +166,6 @@ export interface ConversationDetail {
     status: CollaborationStatus;
     business: {
       company_name: string | null;
-      avatar_url: string | null;
     } | null;
     campaign: { id: string; title: string } | null;
   };

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -58,10 +59,13 @@ async function CreatorProfile() {
           <Card className="flex flex-col items-center gap-4 p-6">
             <div className="relative flex items-center justify-center size-24">
               {profile.avatar_url ? (
-                <img
+                <Image
                   className="rounded-full size-24 object-cover"
                   src={profile.avatar_url}
                   alt=""
+                  width={96}
+                  height={96}
+                  unoptimized
                 />
               ) : (
                 <div className="flex items-center justify-center size-24 rounded-full bg-muted">

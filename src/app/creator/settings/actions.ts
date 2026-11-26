@@ -7,6 +7,7 @@ import {
   listOwnSocialAccounts,
 } from "@/services/social-account.service";
 import { socialAccountSchema } from "@/lib/validations/onboarding";
+import { uuidSchema } from "@/lib/validations/ids";
 
 export interface SocialAccountActionState {
   ok: boolean;
@@ -59,13 +60,13 @@ export async function removeSocialAccountAction(
   _prev: SocialAccountActionState,
   formData: FormData,
 ): Promise<SocialAccountActionState> {
-  const accountId = formData.get("accountId");
-  if (typeof accountId !== "string" || accountId.length === 0) {
+  const accountId = uuidSchema.safeParse(formData.get("accountId"));
+  if (!accountId.success) {
     return { ...EMPTY_STATE, message: "Account not found." };
   }
 
   const { user } = await requireCreator();
-  const result = await removeOwnSocialAccount(user.id, accountId);
+  const result = await removeOwnSocialAccount(user.id, accountId.data);
 
   if (!result.ok) {
     return { ...EMPTY_STATE, message: result.message };

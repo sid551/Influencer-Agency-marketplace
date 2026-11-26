@@ -1,9 +1,10 @@
 # Creator–Business Collaboration Marketplace
 
 A two-sided marketplace connecting social media creators with businesses for
-paid collaborations. This repository currently implements the **creator-facing
-platform**; the business side exists as folder structure only and will be
-built in a later phase.
+paid collaborations. The creator-facing platform is complete, and the business
+side now covers onboarding, a dashboard, campaign management, application
+reviews, creator invitations, collaboration management, messaging and
+notifications.
 
 ## Tech stack
 
@@ -71,7 +72,7 @@ Migrations live in `supabase/migrations/` and are applied in filename order.
 
 ```bash
 supabase login                 # once, with your Supabase access token
-supabase link --project-ref jpebrwagpsvutixdyrhi
+supabase link --project-ref <your-project-ref>
 supabase db push               # apply migrations to the hosted project
 ```
 
@@ -101,7 +102,7 @@ Open http://localhost:3000.
 | --- | --- | --- |
 | `mia@example.com` | creator | Fully onboarded, active collaboration, unread messages |
 | `rahul@example.com` | creator | Partial onboarding (step 4), pending invitation |
-| `acme@example.com` | business | Owns the demo campaigns (UI not built yet) |
+| `acme@example.com` | business | Demo campaigns, collaborations, unread messages and notifications |
 
 ## Commands
 
@@ -126,9 +127,23 @@ Open http://localhost:3000.
   social-account add/remove, save & exit, and a server-side completion check
   before the dashboard unlocks. Partial progress is stored in
   `creator_profiles.onboarding_step` (completed-step count, never decreases).
-- **Dashboard:** read-only creator dashboard with real profile, focus areas and
-  social-account data. Campaign discovery, applications and messaging are
-  intentionally deferred to later phases.
+
+## Implemented in Phase 4
+
+- **Dashboard and profile:** the creator dashboard shows real profile, focus
+  area and social-account data; the profile page and edit form are backed by
+  services and revalidated after each change.
+
+## Implemented in Phase 5
+
+- **Social accounts and portfolio:** creators can add/remove social accounts
+  and manage portfolio items with validated URLs; both appear on the profile.
+
+## Implemented in Phase 6
+
+- **Campaign discovery and applications:** creators can browse published and
+  active campaigns, open campaign details, submit one validated application per
+  campaign, and track application status.
 
 ## Implemented in Phase 7
 
@@ -171,12 +186,12 @@ Open http://localhost:3000.
 ```text
 src/
 ├── app/            # Routes (App Router). Route groups: (marketing), (auth);
-│                   # feature areas: creator/ (implemented), business/ (placeholder)
+│                   # feature areas: creator/ and business/ (both implemented)
 ├── components/     # UI only — no data fetching or business logic
 │   ├── ui/         # shadcn/ui primitives
 │   ├── shared/     # components reused across feature areas
 │   ├── creator/    # creator feature components
-│   └── business/   # placeholder for the future business side
+│   └── business/   # business feature components
 ├── lib/
 │   ├── supabase/   # browser client, server client, proxy session helper
 │   ├── auth/       # role helpers, guards
@@ -212,10 +227,75 @@ src/
 - [x] **Phase 7** — Collaborations and messaging
 - [x] **Phase 8** — Notifications and verification
 - [x] **Phase 9** — Testing, security review, deployment preparation
+- [x] **Phase 10** — Business onboarding, dashboard and campaign management
+- [x] **Phase 11** — Business application reviews and creator invitations
+- [x] **Phase 12** — Business collaboration management
+- [x] **Phase 13** — Business messaging and notifications
+
+## Implemented in Phase 10
+
+- **Business access:** `business` accounts land on `/business`; `/creator` and
+  `/business` redirect role mismatches to the correct dashboard, and `/home`
+  resolves the role after authentication.
+- **Company onboarding and profile:** business signup creates only a `profiles`
+  row, so onboarding inserts and then maintains `business_profiles` with
+  validated company details.
+- **Dashboard:** campaign/application counts, recent campaigns and company
+  details, all scoped to the signed-in business by RLS.
+- **Campaign management:** businesses can create draft or published campaigns,
+  edit them, and change their status; IDs and all form fields are validated on
+  the server before reaching a service.
+
+## Implemented in Phase 11
+
+- **Application reviews:** businesses see every application to their campaigns,
+  filter by campaign and status, open the full proposal, and shortlist, accept
+  or decline it. Allowed transitions mirror the database trigger; terminal
+  states have no actions.
+- **Creator invitations:** businesses can browse the public creator directory,
+  send a pending invitation with an optional campaign, and cancel pending
+  invitations. Invitation messages are immutable after insertion, matching the
+  column-level grants.
+
+## Implemented in Phase 12
+
+- **Collaboration overview:** businesses see every collaboration created from
+  an accepted invitation, filter by status, and open a scoped detail page.
+- **Negotiation:** both parties can edit price, currency, deadline and terms
+  while the agreement is open; businesses also own the agreed deliverable list,
+  with each item's status and creator-supplied asset link preserved.
+- **Review and approval:** after the creator submits work, businesses approve
+  individual deliverables, then approve the collaboration only when every item
+  is approved. Revision requests, disputes and completion use the same
+  business-side transition map as the database trigger.
+- **Workflow safety:** Server Actions validate UUIDs and form payloads with
+  Zod, re-check ownership with `requireBusiness()`, and rely on RLS plus the
+  transition/milestone triggers as the final authority. Workflow timestamps and
+  revision notes remain database-owned, so there is no client write path for
+  them.
+
+## Implemented in Phase 13
+
+- **Business messaging:** `/business/messages` lists collaboration threads by
+  recent activity with unread counts, and `/business/messages/[id]` renders a
+  live thread. Businesses can open the single conversation from a collaboration
+  detail page (creating it on first use), send validated messages, and mark
+  creator messages read. Ownership is checked with `business_profile_id` and
+  enforced by RLS; Realtime delivers new messages and read receipts.
+- **Business notifications:** `/business/notifications` shows new applications,
+  invitation answers, collaboration updates and messages. Businesses can filter
+  unread items, mark one or all as read, dismiss notifications, and receive new
+  rows live through Realtime. Unread badges stream in the business nav.
+- **Database support:** `20261126000009_phase13_business_notifications.sql`
+  adds `SECURITY DEFINER` triggers (fixed `search_path`) for creator actions that
+  previously produced no business notification: new applications, invitation
+  answers, and creator-side collaboration transitions, including `submitted`.
+  All generated links point at implemented `/business` routes, and actor checks
+  prevent self-notifications and seed/system writes.
 
 ## Testing
 
-Run the automated quality checks from `creator-marketplace/`:
+Run the automated quality checks from the project root:
 
 ```bash
 npm run lint
@@ -225,9 +305,10 @@ npm run test:watch
 npm run build
 ```
 
-The same checks run in GitHub Actions on pushes to `main` and on every pull
-request (`.github/workflows/ci.yml`). CI uses placeholder Supabase values; no
-real credentials are needed for lint, test or build.
+The same checks (plus a production build and dependency audit) run in GitHub
+Actions on pushes to `master` and on every pull request
+(`.github/workflows/ci.yml`). CI uses placeholder Supabase values; no real
+credentials are needed for lint, test or build.
 
 Async Server Components and RLS behavior are verified against Supabase rather
 than mocked in unit tests:
@@ -239,9 +320,11 @@ psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
   -f supabase/tests/rls_assertions.sql
 ```
 
-`supabase/tests/rls_assertions.sql` exercises the policies as creator, business
-and admin roles, including the Phase 9 hardening assertions (trigger-only
-notifications, scoped verification evidence and workflow-owned timestamps).
+`supabase/tests/rls_assertions.sql` exercises the policies as creator and
+business roles (by switching the JWT subject), and confirms that admin-only
+writes are rejected for non-admins. It includes the Phase 9 hardening assertions
+(trigger-only notifications, scoped verification evidence and workflow-owned
+timestamps).
 
 ## Security review
 
@@ -266,9 +349,9 @@ use generic messages; `error.digest` can be correlated with server logs.
 ## Deployment (Vercel)
 
 1. Push the repository to GitHub and import it in Vercel.
-2. Set the project root directory to `creator-marketplace`. Vercel detects
-   Next.js; use `npm ci` and `npm run build` if you override the defaults, with
-   Node.js 22.
+2. Keep the repository root as the project root (there is no nested
+   `creator-marketplace/` directory). Vercel detects Next.js; use `npm ci` and
+   `npm run build` if you override the defaults, with Node.js 22.
 3. Add the environment variables from `.env.example` in Vercel project settings:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
