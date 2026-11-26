@@ -119,7 +119,7 @@ export function BusinessDeliverablesEditor({
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_180px_auto]"
+              className="grid gap-3 rounded-2xl border border-border p-3 sm:grid-cols-[1fr_180px_auto]"
             >
               <div className="grid gap-1">
                 <label

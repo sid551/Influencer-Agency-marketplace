@@ -20,7 +20,7 @@ import {
 } from "@/types/action-state.types";
 
 const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "flex h-9 w-full rounded-xl border border-input bg-card/80 px-3 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export interface CampaignFormDefaults {
   campaignId: string;

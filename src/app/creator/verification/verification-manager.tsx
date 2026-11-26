@@ -257,7 +257,7 @@ function ClaimsCard({ claims }: { claims: VerificationWithSocial[] }) {
             {claims.map((claim) => (
               <li
                 key={claim.id}
-                className="rounded-lg border border-border px-3 py-3"
+                className="rounded-2xl border border-border px-3 py-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">

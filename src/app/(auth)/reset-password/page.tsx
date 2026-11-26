@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-80 animate-pulse rounded-lg bg-muted" aria-hidden />
+        <div className="h-80 animate-pulse rounded-3xl bg-muted" aria-hidden />
       }
     >
       <ResetPasswordGate />
@@ -31,7 +31,7 @@ async function ResetPasswordGate() {
 
   if (!user) {
     return (
-      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
         <h1 className="text-xl font-semibold tracking-tight">
           Link expired
         </h1>

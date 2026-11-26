@@ -77,7 +77,7 @@ export function SignupForm() {
   }, [state.fieldErrors, form]);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
       <h1 className="text-xl font-semibold tracking-tight">
         Create your account
       </h1>
@@ -113,7 +113,7 @@ export function SignupForm() {
                       aria-checked={field.value === option.value}
                       onClick={() => field.onChange(option.value)}
                       className={cn(
-                        "rounded-lg border p-3 text-left transition-colors outline-none",
+                        "rounded-2xl border p-3 text-left transition-colors outline-none",
                         "focus-visible:ring-3 focus-visible:ring-ring/50",
                         field.value === option.value
                           ? "border-primary bg-primary/5"

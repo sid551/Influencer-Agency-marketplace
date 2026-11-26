@@ -7,7 +7,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-80 animate-pulse rounded-lg bg-muted" aria-hidden />
+        <div className="h-80 animate-pulse rounded-3xl bg-muted" aria-hidden />
       }
     >
       <VerifyEmailForm />

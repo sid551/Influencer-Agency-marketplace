@@ -25,7 +25,7 @@ export function VerifyEmailForm() {
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
       <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
         <MailIcon className="size-5" />
       </div>

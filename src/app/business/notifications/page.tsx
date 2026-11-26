@@ -34,7 +34,7 @@ async function NotificationsLoader() {
 function NotificationsSkeleton() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <div className="h-8 w-40 animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-40 animate-pulse rounded-xl bg-muted" />
       <div className="mt-6 grid gap-2">
         {Array.from({ length: 3 }).map((_, index) => (
           <Card key={index} className="h-24 animate-pulse" />

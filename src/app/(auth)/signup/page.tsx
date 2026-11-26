@@ -7,7 +7,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-96 animate-pulse rounded-lg bg-muted" aria-hidden />
+        <div className="h-96 animate-pulse rounded-3xl bg-muted" aria-hidden />
       }
     >
       <SignupForm />

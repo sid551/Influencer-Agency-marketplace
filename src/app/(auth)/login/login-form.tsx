@@ -61,7 +61,7 @@ export function LoginForm() {
   const formError = state.error ?? urlError;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
       <h1 className="text-xl font-semibold tracking-tight">Welcome back</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Log in to manage your collaborations.

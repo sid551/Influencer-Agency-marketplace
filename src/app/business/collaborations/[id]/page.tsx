@@ -191,7 +191,7 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
             <CardContent className="grid gap-4">
               {collaboration.status === "submitted" &&
               !allDeliverablesApproved ? (
-                <p className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
                   Approve every submitted deliverable to unlock collaboration
                   approval.
                 </p>
@@ -268,7 +268,7 @@ function DeliverableRow({
   canReview: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border p-3">
+    <div className="rounded-2xl border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{deliverable.title}</p>
         <Badge

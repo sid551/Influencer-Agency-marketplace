@@ -64,6 +64,14 @@ GoTrue rejects redirect URLs that are not allow-listed and silently falls back
 to the Site URL, which breaks email confirmation and password-reset links.
 The local allow-list is kept in `supabase/config.jsonc`.
 
+### Email delivery with Brevo
+
+Production auth emails are sent through Brevo SMTP. Local development keeps
+using the built-in Inbucket testing inbox, so no Brevo credentials are needed
+for `npm run dev`. See [docs/brevo-email.md](docs/brevo-email.md) for the exact
+Brevo/Supabase settings, required secrets, and the `npm run configure:brevo`
+script.
+
 ### 4. Set up the database
 
 Migrations live in `supabase/migrations/` and are applied in filename order.
@@ -112,6 +120,7 @@ Open http://localhost:3000.
 | `npm run build` | Production build |
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
+| `npm run configure:brevo` | Configure hosted Supabase Auth SMTP using Brevo |
 | `npx tsc --noEmit` | Type-check without emitting files |
 
 ## Implemented in Phase 3
@@ -364,5 +373,8 @@ use generic messages; `error.digest` can be correlated with server logs.
 5. In Supabase Dashboard → Authentication → URL Configuration:
    - set Site URL to the production origin;
    - add `https://<your-domain>/auth/confirm` to redirect URLs.
-6. After deployment, smoke-test signup/login, a creator page, a protected
-   action, and a 404 URL. Confirm the automated CI run is green before release.
+6. Configure Brevo SMTP and email confirmations as described in
+   [docs/brevo-email.md](docs/brevo-email.md).
+7. After deployment, smoke-test signup → confirmation email → login, a creator
+   page, a protected action, and a 404 URL. Confirm the automated CI run is
+   green before release.

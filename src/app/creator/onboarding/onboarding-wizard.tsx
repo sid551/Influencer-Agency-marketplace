@@ -239,7 +239,7 @@ export function OnboardingWizard({
         </Alert>
       ) : null}
 
-      <div className="mt-6 rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
+      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:p-6">
         {step === 9 ? (
           <SocialAccountsStep
             accounts={socialAccounts}

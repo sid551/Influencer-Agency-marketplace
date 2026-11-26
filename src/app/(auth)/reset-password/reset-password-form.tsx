@@ -56,7 +56,7 @@ export function ResetPasswordForm() {
   }, [state.fieldErrors, form]);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
       <h1 className="text-xl font-semibold tracking-tight">
         Set a new password
       </h1>

@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "configure:brevo": "node --env-file=.env.local scripts/configure-supabase-brevo.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.9",
