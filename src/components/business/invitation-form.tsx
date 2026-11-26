@@ -11,7 +11,7 @@ import type { CreatorDirectoryEntry } from "@/types/creator.types";
 import { EMPTY_FORM_STATE } from "@/types/action-state.types";
 
 const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "flex h-9 w-full rounded-xl border border-input bg-card/80 px-3 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function creatorLabel(creator: CreatorDirectoryEntry): string {
   const name = creator.full_name ?? creator.username ?? "Creator";

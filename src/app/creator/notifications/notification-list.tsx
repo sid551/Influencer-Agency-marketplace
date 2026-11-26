@@ -260,7 +260,7 @@ export function NotificationList({
                       <Link
                         href={notification.link_path!}
                         onClick={() => handleMarkRead(notification)}
-                        className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {summary}
                       </Link>

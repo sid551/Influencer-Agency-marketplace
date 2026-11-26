@@ -284,11 +284,11 @@ async function CreatorProfile() {
 function ProfileSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
-      <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
+      <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="h-48 rounded-lg animate-pulse" />
+          <Card key={i} className="h-48 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>

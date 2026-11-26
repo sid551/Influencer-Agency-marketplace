@@ -138,10 +138,10 @@ function ApplicationCard({
 function ApplicationsSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="h-24 rounded-lg animate-pulse" />
+          <Card key={i} className="h-24 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>

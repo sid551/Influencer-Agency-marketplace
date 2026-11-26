@@ -261,14 +261,14 @@ function ApplyCard({
 function CampaignSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
-      <div className="mt-6 rounded-lg border bg-card shadow-sm">
-        <div className="h-64 animate-pulse rounded-lg bg-card" />
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
+      <div className="mt-6 rounded-2xl border border-border bg-card shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)]">
+        <div className="h-64 animate-pulse rounded-2xl bg-card" />
         <div className="p-6 space-y-3">
-          <div className="h-4 w-48 animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-full animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
-          <div className="h-4 w-1/2 animate-pulse rounded-md bg-muted" />
+          <div className="h-4 w-48 animate-pulse rounded-xl bg-muted" />
+          <div className="h-4 w-full animate-pulse rounded-xl bg-muted" />
+          <div className="h-4 w-3/4 animate-pulse rounded-xl bg-muted" />
+          <div className="h-4 w-1/2 animate-pulse rounded-xl bg-muted" />
         </div>
       </div>
     </div>

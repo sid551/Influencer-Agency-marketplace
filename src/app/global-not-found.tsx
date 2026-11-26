@@ -24,7 +24,7 @@ export default function GlobalNotFound() {
           </p>
           <Link
             href="/"
-            className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+            className="mt-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Back to home
           </Link>

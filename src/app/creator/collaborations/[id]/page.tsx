@@ -223,7 +223,7 @@ function DeliverableRow({
   canSubmit: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-border p-3">
+    <div className="rounded-2xl border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{deliverable.title}</p>
         <Badge variant={deliverable.status === "approved" ? "default" : "outline"} className="text-xs">

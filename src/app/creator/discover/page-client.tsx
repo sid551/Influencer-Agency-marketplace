@@ -58,7 +58,7 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-12">
       <aside className="lg:col-span-3">
-        <div className="rounded-lg border bg-card p-4 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)] space-y-4">
           <h2 className="text-sm font-semibold">Filters</h2>
           <FilterSelect
             label="Status"
@@ -92,7 +92,7 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
       </aside>
 
       <section className="lg:col-span-9">
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)]">
           <label className="text-xs font-medium text-muted-foreground block mb-2">
             Search campaigns
           </label>

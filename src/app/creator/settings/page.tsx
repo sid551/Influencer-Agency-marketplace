@@ -58,7 +58,7 @@ function SocialAccountsSection({
   accounts: Awaited<ReturnType<typeof listOwnSocialAccounts>>;
 }) {
   return (
-    <div className="rounded-lg border bg-card shadow-sm">
+    <div className="rounded-2xl border border-border bg-card shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)]">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold">Social accounts</h2>
@@ -87,14 +87,14 @@ function SocialAccountsSection({
 function SettingsSkeleton() {
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
-      <div className="mt-8 rounded-lg border bg-card shadow-sm">
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
+      <div className="mt-8 rounded-2xl border border-border bg-card shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)]">
         <div className="border-b px-4 py-3">
-          <div className="h-4 w-48 animate-pulse rounded-md bg-muted" />
+          <div className="h-4 w-48 animate-pulse rounded-xl bg-muted" />
         </div>
         <div className="px-4 py-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-10 w-full animate-pulse rounded-md bg-muted" />
+            <div key={i} className="h-10 w-full animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
       </div>

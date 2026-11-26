@@ -313,7 +313,7 @@ function MultiCheckboxField({
                 <label
                   key={option}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors",
+                    "flex cursor-pointer items-center gap-2 rounded-2xl border p-2.5 text-sm transition-colors",
                     "hover:bg-muted",
                     checked
                       ? "border-primary bg-primary/5"

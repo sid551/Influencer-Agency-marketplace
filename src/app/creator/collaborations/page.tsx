@@ -223,8 +223,8 @@ function CollaborationsView({
 function CollaborationsSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="h-8 w-56 animate-pulse rounded-md bg-muted" />
-      <div className="mt-8 h-6 w-32 animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-56 animate-pulse rounded-xl bg-muted" />
+      <div className="mt-8 h-6 w-32 animate-pulse rounded-xl bg-muted" />
       <div className="mt-3 grid gap-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <Card key={index} className="h-28 animate-pulse" />

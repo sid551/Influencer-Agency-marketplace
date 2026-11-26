@@ -99,7 +99,7 @@ async function ApplicationsLoader({
                 id="campaign"
                 name="campaign"
                 defaultValue={campaignFilter}
-                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
               >
                 <option value="">All campaigns</option>
                 {campaigns.map((campaign) => (
@@ -117,7 +117,7 @@ async function ApplicationsLoader({
                 id="status"
                 name="status"
                 defaultValue={statusFilter}
-                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
               >
                 <option value="">All statuses</option>
                 {APPLICATION_STATUSES.map((status) => (

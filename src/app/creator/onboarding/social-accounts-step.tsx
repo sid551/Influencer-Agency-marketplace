@@ -130,7 +130,7 @@ export function SocialAccountsStep({
           {accounts.map((account) => (
             <li
               key={account.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-3 py-2.5"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
@@ -159,7 +159,7 @@ export function SocialAccountsStep({
           ))}
         </ul>
       ) : (
-        <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
           No accounts linked yet — add at least one below (you can skip
           this step too).
         </p>
@@ -168,7 +168,7 @@ export function SocialAccountsStep({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleAdd)}
-          className="grid gap-4 rounded-lg border border-border bg-muted/30 p-4"
+          className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-4"
           noValidate
         >
           <div className="grid gap-4 sm:grid-cols-2">

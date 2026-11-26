@@ -27,9 +27,9 @@ export default function OnboardingPage() {
           className="mx-auto w-full max-w-2xl px-4 py-10"
           aria-hidden
         >
-          <div className="h-8 w-56 animate-pulse rounded-md bg-muted" />
-          <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-md bg-muted" />
-          <div className="mt-10 h-72 animate-pulse rounded-lg bg-muted" />
+          <div className="h-8 w-56 animate-pulse rounded-xl bg-muted" />
+          <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-xl bg-muted" />
+          <div className="mt-10 h-72 animate-pulse rounded-3xl bg-muted" />
         </div>
       }
     >

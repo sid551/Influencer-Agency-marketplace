@@ -86,7 +86,7 @@ async function CollaborationsLoader({
                 id="status"
                 name="status"
                 defaultValue={statusFilter}
-                className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
               >
                 <option value="">All statuses</option>
                 {COLLABORATION_STATUSES.map((status) => (

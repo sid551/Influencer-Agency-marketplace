@@ -201,7 +201,7 @@ function DashboardSkeleton() {
       <Skeleton className="mt-2 h-4 w-96 max-w-full" />
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-48 rounded-lg" />
+          <Skeleton key={index} className="h-48 rounded-2xl" />
         ))}
       </div>
     </div>

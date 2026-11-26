@@ -52,7 +52,7 @@ export function SocialAccountsList({
       {accounts.map((account) => (
         <li
           key={account.id}
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-3 py-2.5"
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">

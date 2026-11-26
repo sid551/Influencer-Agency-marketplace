@@ -34,7 +34,7 @@ export function BusinessProfileForm({
         </p>
       ) : null}
       {state.ok && state.message ? (
-        <p className="text-sm text-emerald-600" role="status">
+        <p className="text-sm font-medium text-foreground" role="status">
           {state.message}
         </p>
       ) : null}

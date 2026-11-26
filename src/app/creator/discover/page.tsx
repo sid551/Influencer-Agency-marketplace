@@ -40,11 +40,11 @@ async function DiscoverLoader() {
 function DiscoverSkeleton() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
-      <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
+      <div className="mt-6 h-4 w-full max-w-md animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-80 rounded-lg animate-pulse bg-card" />
+          <div key={i} className="h-80 rounded-2xl animate-pulse bg-card" />
         ))}
       </div>
     </div>

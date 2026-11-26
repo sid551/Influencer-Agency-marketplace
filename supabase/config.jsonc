@@ -235,7 +235,7 @@
 
     "rate_limit": {
       // Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
-      "email_sent": 2,
+      "email_sent": 10,
       // Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
       "sms_sent": 30,
       // Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -265,7 +265,9 @@
       // addresses. If disabled, only the new email is required to confirm.
       "double_confirm_changes": true,
       // If enabled, users need to confirm their email address before signing in.
-      "enable_confirmations": false,
+      // Local development uses the Inbucket testing SMTP below; hosted projects
+      // use the Brevo SMTP settings configured in Supabase Auth (see README).
+      "enable_confirmations": true,
       // If enabled, users will need to reauthenticate or have logged in recently to change their password.
       "secure_password_change": false,
       // If enabled, users will need to provide their current password to change their password, unless
@@ -278,15 +280,19 @@
       // Number of seconds before the email OTP expires (defaults to 1 hour).
       "otp_expiry": 3600,
 
-      // Use a production-ready SMTP server
+      // Use a production-ready SMTP server. Hosted projects are configured in
+      // Supabase Dashboard → Authentication → SMTP (or `npm run configure:brevo`).
+      // To route LOCAL emails through Brevo instead of Inbucket, export the
+      // BREVO_* variables in your shell (or a gitignored `.env` file read by the
+      // Supabase CLI), disable local_smtp above, and uncomment this:
       // "smtp": {
       //   "enabled": true,
-      //   "host": "smtp.sendgrid.net",
+      //   "host": "smtp-relay.brevo.com",
       //   "port": 587,
-      //   "user": "apikey",
-      //   "pass": "env(SENDGRID_API_KEY)",
-      //   "admin_email": "admin@email.com",
-      //   "sender_name": "Admin"
+      //   "user": "env(BREVO_SMTP_USER)",
+      //   "pass": "env(BREVO_SMTP_KEY)",
+      //   "admin_email": "env(BREVO_SENDER_EMAIL)",
+      //   "sender_name": "env(BREVO_SENDER_NAME)"
       // },
 
       // Uncomment to customize email template

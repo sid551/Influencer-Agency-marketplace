@@ -82,7 +82,7 @@ function MessagesView({
               <Link
                 key={conversation.id}
                 href={`/creator/messages/${conversation.id}`}
-                className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Card className="transition-colors hover:bg-muted/50">
                   <CardContent className="flex items-center gap-3 p-4">
@@ -124,7 +124,7 @@ function MessagesView({
 function MessagesSkeleton() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="h-8 w-32 animate-pulse rounded-md bg-muted" />
+      <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-3">
         {Array.from({ length: 3 }).map((_, index) => (
           <Card key={index} className="h-20 animate-pulse" />

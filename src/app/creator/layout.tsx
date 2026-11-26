@@ -1,16 +1,35 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
+import {
+  Bell,
+  ClipboardList,
+  Compass,
+  Handshake,
+  Images,
+  LayoutDashboard,
+  MessagesSquare,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
 import { UserMenu, UserMenuSkeleton } from "@/components/creator/user-menu";
 import { UnreadMessagesBadge } from "@/components/creator/unread-messages-badge";
 import { UnreadNotificationsBadge } from "@/components/creator/unread-notifications-badge";
+import {
+  AppSidebar,
+  type SidebarSection,
+} from "@/components/layout/app-sidebar";
+import { MobileNavShell } from "@/components/layout/mobile-nav-shell";
+
+const sidebarBadgeClass =
+  "bg-sidebar text-sidebar-foreground ring-1 ring-sidebar-foreground/20";
 
 /**
  * Shell for all /creator routes.
  *
- * The header's user menu reads the session, so it streams in behind a
+ * The sidebar user menu reads the session, so it streams in behind a
  * <Suspense> boundary (Cache Components rule). requireCreator() inside
  * it also redirects business accounts away early — but every page
  * still performs its own check when loading data.
@@ -20,76 +39,74 @@ export default function CreatorLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const sections: SidebarSection[] = [
+    {
+      label: "Workspace",
+      items: [
+        { href: "/creator", label: "Dashboard", icon: LayoutDashboard, exact: true },
+        { href: "/creator/applications", label: "Applications", icon: ClipboardList },
+        { href: "/creator/discover", label: "Discover", icon: Compass },
+        { href: "/creator/collaborations", label: "Collaborations", icon: Handshake },
+      ],
+    },
+    {
+      label: "Inbox",
+      items: [
+        {
+          href: "/creator/messages",
+          label: "Messages",
+          icon: MessagesSquare,
+          trailing: (
+            <Suspense fallback={null}>
+              <UnreadMessagesBadge className={sidebarBadgeClass} />
+            </Suspense>
+          ),
+        },
+        {
+          href: "/creator/notifications",
+          label: "Notifications",
+          icon: Bell,
+          trailing: (
+            <Suspense fallback={null}>
+              <UnreadNotificationsBadge className={sidebarBadgeClass} />
+            </Suspense>
+          ),
+        },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { href: "/creator/profile", label: "Profile", icon: UserRound },
+        { href: "/creator/verification", label: "Verification", icon: ShieldCheck },
+        { href: "/creator/portfolio", label: "Portfolio", icon: Images },
+        { href: "/creator/settings", label: "Settings", icon: Settings },
+      ],
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-6">
-            <Link
-              href="/creator"
-              className="text-sm font-semibold tracking-tight"
-            >
-              Creator Marketplace
-            </Link>
-            <nav className="hidden items-center gap-4 text-sm text-muted-foreground sm:flex">
-              <Link href="/creator" className="hover:text-foreground">
-                Dashboard
-              </Link>
-              <Link href="/creator/applications" className="hover:text-foreground">
-                Applications
-              </Link>
-              <Link href="/creator/discover" className="hover:text-foreground">
-                Discover
-              </Link>
-              <Link
-                href="/creator/collaborations"
-                className="hover:text-foreground"
-              >
-                Collaborations
-              </Link>
-              <Link
-                href="/creator/messages"
-                className="inline-flex items-center gap-1.5 hover:text-foreground"
-              >
-                Messages
-                <Suspense fallback={null}>
-                  <UnreadMessagesBadge />
-                </Suspense>
-              </Link>
-              <Link
-                href="/creator/notifications"
-                className="inline-flex items-center gap-1.5 hover:text-foreground"
-              >
-                Notifications
-                <Suspense fallback={null}>
-                  <UnreadNotificationsBadge />
-                </Suspense>
-              </Link>
-              <Link href="/creator/profile" className="hover:text-foreground">
-                Profile
-              </Link>
-              <Link href="/creator/verification" className="hover:text-foreground">
-                Verification
-              </Link>
-              <Link href="/creator/portfolio" className="hover:text-foreground">
-                Portfolio
-              </Link>
-              <Link href="/creator/settings" className="hover:text-foreground">
-                Settings
-              </Link>
-            </nav>
-          </div>
-          <Suspense fallback={<UserMenuSkeleton />}>
-            <CreatorHeaderUser />
-          </Suspense>
-        </div>
-      </header>
+    <div className="min-h-screen lg:pl-72">
+      <MobileNavShell
+        homeHref="/creator"
+        brandLabel="Creator Marketplace"
+        workspaceLabel="Creator studio"
+      >
+        <AppSidebar
+          sections={sections}
+          user={
+            <Suspense fallback={<UserMenuSkeleton showIdentity />}>
+              <CreatorSidebarUser />
+            </Suspense>
+          }
+        />
+      </MobileNavShell>
       <main className="flex-1">{children}</main>
     </div>
   );
 }
 
-async function CreatorHeaderUser() {
+async function CreatorSidebarUser() {
   // Defer the session read to request time: Supabase's session expiry
   // check calls Date.now(), which can't run during prerendering of the
   // static shell (https://nextjs.org/docs/messages/blocking-prerender-current-time).
@@ -102,6 +119,7 @@ async function CreatorHeaderUser() {
       fullName={profile.full_name}
       username={profile.username}
       avatarUrl={profile.avatar_url}
+      showIdentity
     />
   );
 }
