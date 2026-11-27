@@ -199,8 +199,8 @@ export async function completeOnboarding(): Promise<OnboardingActionState> {
     return { ...EMPTY_STATE, message: saved.message };
   }
 
-  // Landing on the dashboard is the only sensible outcome here.
-  redirect("/creator");
+  // Creators land on discovery after finishing onboarding.
+  redirect("/creator/discover");
 }
 
 // ---------------------------------------------------------------

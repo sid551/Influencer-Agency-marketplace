@@ -46,7 +46,7 @@ async function OnboardingLoader() {
   const creatorProfile = await getOwnCreatorProfile(user.id);
 
   if (creatorProfile?.onboarding_completed) {
-    redirect("/creator");
+    redirect("/creator/discover");
   }
 
   const socialAccounts = await listOwnSocialAccounts(user.id);

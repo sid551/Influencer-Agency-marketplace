@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon, CalendarDaysIcon, MessageSquareIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
+import { formatMoney } from "@/lib/money";
 import { getCollaborationForCreator } from "@/services/collaboration.service";
 import type {
   CollaborationDetail,
@@ -14,6 +15,7 @@ import type {
 import {
   CollaborationStatusActions,
   CollaborationTermsForm,
+  CreatorDeclineButton,
   DeliverableSubmitForm,
   OpenConversationButton,
 } from "../collaboration-actions";
@@ -112,7 +114,7 @@ function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
-              <Detail label="Agreed price" value={collaboration.agreed_price !== null ? `$${collaboration.agreed_price} ${collaboration.currency}` : "Not agreed yet"} />
+              <Detail label="Agreed price" value={collaboration.agreed_price !== null ? formatMoney(collaboration.agreed_price, collaboration.currency) : "Not agreed yet"} />
               <Detail label="Deadline" value={formatDate(collaboration.deadline)} />
               <Detail label="Submitted" value={collaboration.submitted_at ? formatDate(collaboration.submitted_at) : "Not submitted"} />
               <Detail label="Completed" value={collaboration.completed_at ? formatDate(collaboration.completed_at) : "Not completed"} />
@@ -170,10 +172,15 @@ function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CollaborationStatusActions
-                collaborationId={collaboration.id}
-                status={collaboration.status}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <CollaborationStatusActions
+                  collaborationId={collaboration.id}
+                  status={collaboration.status}
+                />
+                {canEditTerms ? (
+                  <CreatorDeclineButton collaborationId={collaboration.id} />
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 

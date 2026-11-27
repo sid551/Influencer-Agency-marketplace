@@ -6,6 +6,11 @@ import { Suspense } from "react";
 import { requireCreator } from "@/lib/auth/session";
 import { getOwnCreatorProfile } from "@/services/creator-profile.service";
 import { listOwnSocialAccounts } from "@/services/social-account.service";
+import {
+  listMyVerifications,
+  listVerifiableSocialAccounts,
+} from "@/services/verification.service";
+import { VerificationManager } from "@/components/creator/verification-manager";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,10 +38,15 @@ export default function CreatorProfilePage() {
 async function CreatorProfile() {
   await connection();
   const { user, profile } = await requireCreator();
-  const creatorProfile = await getOwnCreatorProfile(user.id);
-  const socialAccounts = await listOwnSocialAccounts(user.id);
+  const [creatorProfile, socialAccounts, claims, verifiableAccounts] =
+    await Promise.all([
+      getOwnCreatorProfile(user.id),
+      listOwnSocialAccounts(user.id),
+      listMyVerifications(user.id),
+      listVerifiableSocialAccounts(user.id),
+    ]);
 
-  if (!creatorProfile) {
+  if (!creatorProfile?.onboarding_completed) {
     redirect("/creator/onboarding");
   }
 
@@ -273,6 +283,22 @@ async function CreatorProfile() {
               >
                 Edit profile details
               </Link>
+            </CardContent>
+          </Card>
+
+          <Card id="verification" className="scroll-mt-8">
+            <CardHeader>
+              <CardTitle>Verification</CardTitle>
+              <CardDescription>
+                Request review for your identity, social accounts or audience.
+                Nothing is marked verified until a moderator approves it.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VerificationManager
+                claims={claims}
+                accounts={verifiableAccounts}
+              />
             </CardContent>
           </Card>
         </div>

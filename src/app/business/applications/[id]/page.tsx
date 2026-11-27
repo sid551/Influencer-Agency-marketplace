@@ -63,10 +63,14 @@ async function ApplicationLoader({
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
-        href="/business/applications"
+        href={
+          application.campaign_id
+            ? `/business/campaigns/${application.campaign_id}/applications`
+            : "/business/campaigns"
+        }
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Back to applications
+        ← Back to campaign applications
       </Link>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -139,7 +143,8 @@ async function ApplicationLoader({
             <CardHeader>
               <CardTitle>Review</CardTitle>
               <CardDescription>
-                Decisions are final; the database enforces allowed transitions.
+                Accepting opens a negotiation with this creator. Finalize one
+                creator after you agree on the work and price.
               </CardDescription>
             </CardHeader>
             <CardContent>

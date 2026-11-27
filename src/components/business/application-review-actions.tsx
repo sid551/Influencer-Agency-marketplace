@@ -14,8 +14,8 @@ import {
 import { EMPTY_FORM_STATE } from "@/types/action-state.types";
 
 const DECISION_LABELS: Record<BusinessApplicationDecision, string> = {
-  shortlisted: "Shortlist",
   accepted: "Accept",
+  finalized: "Finalize creator",
   rejected: "Decline",
 };
 
@@ -33,7 +33,7 @@ export function ApplicationReviewActions({
   return (
     <div className="flex flex-wrap gap-2">
       {decisions.map((decision) => (
-        <DecisionButton
+        <ApplicationDecisionButton
           key={decision}
           applicationId={applicationId}
           decision={decision}
@@ -43,12 +43,14 @@ export function ApplicationReviewActions({
   );
 }
 
-function DecisionButton({
+export function ApplicationDecisionButton({
   applicationId,
   decision,
+  size = "sm",
 }: {
   applicationId: string;
   decision: BusinessApplicationDecision;
+  size?: "sm" | "default";
 }) {
   const [state, formAction, pending] = useActionState(
     reviewApplicationAction.bind(null, applicationId, decision),
@@ -65,8 +67,12 @@ function DecisionButton({
     <form action={formAction}>
       <Button
         type="submit"
-        size="sm"
-        variant={decision === "accepted" ? "default" : "outline"}
+        size={size}
+        variant={
+          decision === "accepted" || decision === "finalized"
+            ? "default"
+            : "outline"
+        }
         disabled={pending}
       >
         {pending ? <Loader2Icon className="animate-spin" /> : null}

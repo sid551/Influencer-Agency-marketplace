@@ -4,8 +4,6 @@
 // supabase/migrations/20261125000001_initial_schema.sql.
 // =============================================================
 
-import type { CollaborationRequest } from "./campaign.types";
-
 export const COLLABORATION_STATUSES = [
   "negotiating",
   "agreement_pending",
@@ -131,13 +129,29 @@ export interface CollaborationDetail extends CollaborationListItem {
   conversationId: string | null;
 }
 
-/** A pending invitation with the business and campaign that sent it. */
-export interface CollaborationInvitation extends CollaborationRequest {
-  business: {
-    company_name: string | null;
-    industry: string | null;
-  } | null;
-  campaign: { id: string; title: string } | null;
+/** Campaign summary carried by conversation headers so the thread can show
+ *  the business's goals (brief, deliverables, budget) next to the messages. */
+export interface ConversationCampaign {
+  id: string;
+  title: string;
+  description: string;
+  budget_min: number | null;
+  budget_max: number | null;
+  currency: string;
+  deliverables: string[];
+  platforms: string[];
+}
+
+/** Negotiated-price context every conversation header shares, regardless of
+ *  which side of the collaboration is reading it. */
+export interface ConversationCollaboration {
+  id: string;
+  status: CollaborationStatus;
+  agreed_price: number | null;
+  currency: string;
+  terms: string | null;
+  deadline: string | null;
+  campaign: ConversationCampaign | null;
 }
 
 /** Conversation thread header shown to the creator. */
@@ -146,14 +160,13 @@ export interface ConversationListItem {
   collaboration_id: string;
   created_at: string;
   updated_at: string;
-  collaboration: {
-    id: string;
-    status: CollaborationStatus;
-    business: {
-      company_name: string | null;
-    } | null;
-    campaign: { id: string; title: string } | null;
-  } | null;
+  collaboration:
+    | (ConversationCollaboration & {
+        business: {
+          company_name: string | null;
+        } | null;
+      })
+    | null;
   lastMessage: Message | null;
   unreadCount: number;
 }
@@ -161,19 +174,15 @@ export interface ConversationListItem {
 /** A conversation plus the creator-owned collaboration it belongs to. */
 export interface ConversationDetail {
   conversation: Conversation;
-  collaboration: {
-    id: string;
-    status: CollaborationStatus;
+  collaboration: ConversationCollaboration & {
     business: {
       company_name: string | null;
     } | null;
-    campaign: { id: string; title: string } | null;
   };
 }
 
 export const NOTIFICATION_TYPES = [
   "application_status",
-  "collaboration_invitation",
   "message",
   "deadline",
   "revision_request",

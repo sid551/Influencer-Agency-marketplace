@@ -5,6 +5,7 @@ import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
+import { formatMoneyRange } from "@/lib/money";
 import { getCampaignById, hasAppliedToCampaign } from "@/services/campaign.service";
 import { getOwnCreatorProfile } from "@/services/creator-profile.service";
 import {
@@ -112,7 +113,7 @@ function CampaignView({
                 label="Budget"
                 value={
                   campaign.budget_min !== null && campaign.budget_max !== null
-                    ? `$${campaign.budget_min} – $${campaign.budget_max} ${campaign.currency}`
+                    ? formatMoneyRange(campaign.budget_min, campaign.budget_max, campaign.currency)
                     : "On request"
                 }
               />

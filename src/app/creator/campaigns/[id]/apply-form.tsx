@@ -7,6 +7,8 @@ import { Loader2Icon } from "lucide-react";
 import * as z from "zod";
 
 import { applyToCampaign } from "@/app/creator/applications/actions";
+import { DEFAULT_CURRENCY } from "@/lib/money";
+import { currencySchema } from "@/lib/validations/currency";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,7 +27,7 @@ const applicationFormSchema = z.object({
   proposal: z.string().trim().min(50, { error: "Your proposal must be at least 50 characters." }).max(2000, { error: "Proposal must be 2,000 characters or fewer." }),
   why_suitable: z.string().trim().max(1000, { error: "Why suitable must be 1,000 characters or fewer." }),
   expected_price: z.string().trim().regex(/^\d+(\.\d{1,2})?$/, { error: "Enter a valid price with up to two decimal places." }),
-  currency: z.string().trim().regex(/^[a-zA-Z]{3}$/, { error: "Currency must be a 3-letter code." }),
+  currency: currencySchema,
 });
 
 type ApplicationFormValues = z.infer<typeof applicationFormSchema>;
@@ -43,7 +45,7 @@ export function ApplyToCampaignForm({ campaignId }: { campaignId: string }) {
       proposal: "",
       why_suitable: "",
       expected_price: "",
-      currency: "USD",
+      currency: DEFAULT_CURRENCY,
     },
   });
 
@@ -135,7 +137,7 @@ export function ApplyToCampaignForm({ campaignId }: { campaignId: string }) {
                   <FormItem>
                     <FormLabel>Currency</FormLabel>
                     <FormControl>
-                      <Input placeholder="USD" maxLength={3} {...field} />
+                      <Input placeholder="INR" {...field} readOnly />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

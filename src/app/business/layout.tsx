@@ -2,10 +2,8 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import {
   Bell,
-  ClipboardList,
   Handshake,
   LayoutDashboard,
-  Mail,
   Megaphone,
   MessagesSquare,
   UserRound,
@@ -40,9 +38,7 @@ export default function BusinessLayout({
       items: [
         { href: "/business", label: "Dashboard", icon: LayoutDashboard, exact: true },
         { href: "/business/campaigns", label: "Campaigns", icon: Megaphone },
-        { href: "/business/applications", label: "Applications", icon: ClipboardList },
         { href: "/business/collaborations", label: "Collaborations", icon: Handshake },
-        { href: "/business/invitations", label: "Invitations", icon: Mail },
       ],
     },
     {

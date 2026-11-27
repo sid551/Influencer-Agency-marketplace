@@ -6,20 +6,19 @@ import {
 } from "@/types/campaign.types";
 
 describe("BUSINESS_APPLICATION_TRANSITIONS", () => {
-  it("mirrors the database trigger for pending and shortlisted", () => {
+  it("mirrors the database trigger for pending and accepted", () => {
     expect(BUSINESS_APPLICATION_TRANSITIONS.pending).toEqual([
-      "shortlisted",
       "accepted",
       "rejected",
     ]);
-    expect(BUSINESS_APPLICATION_TRANSITIONS.shortlisted).toEqual([
-      "accepted",
+    expect(BUSINESS_APPLICATION_TRANSITIONS.accepted).toEqual([
+      "finalized",
       "rejected",
     ]);
   });
 
-  it("treats accepted, rejected and withdrawn as terminal", () => {
-    for (const status of ["accepted", "rejected", "withdrawn"] as const) {
+  it("treats finalized, rejected and withdrawn as terminal", () => {
+    for (const status of ["finalized", "rejected", "withdrawn"] as const) {
       expect(BUSINESS_APPLICATION_TRANSITIONS[status]).toEqual([]);
     }
   });

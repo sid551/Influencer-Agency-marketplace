@@ -5,10 +5,12 @@ import {
   BUSINESS_APPLICATION_TRANSITIONS,
   type ApplicationStatus,
   type BusinessApplicationDecision,
+  type Campaign,
   type CampaignStatus,
 } from "@/types/campaign.types";
 import type {
   BusinessApplication,
+  BusinessCampaignDashboardItem,
   BusinessCreator,
 } from "@/types/business.types";
 import type { CreatorDirectoryEntry } from "@/types/creator.types";
@@ -20,6 +22,8 @@ const CREATOR_COLUMNS =
 type ApplicationRow = Omit<BusinessApplication, "campaign" | "creator"> & {
   campaigns: { id: string; title: string; status: string } | null;
 };
+
+type DashboardApplicationRow = Pick<BusinessApplication, "campaign_id">;
 
 /** Public-safe creator summaries for the supplied profile IDs. */
 async function creatorSummaries(
@@ -94,6 +98,28 @@ export async function listBusinessApplications(
   return rows.map((row) => toBusinessApplication(row, creators));
 }
 
+/** Applications to one owned campaign, newest first. */
+export async function listBusinessCampaignApplications(
+  userId: string,
+  campaignId: string,
+): Promise<BusinessApplication[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("campaign_applications")
+    .select(`*, campaigns!inner ( id, title, status )`)
+    .eq("campaign_id", campaignId)
+    .eq("campaigns.business_profile_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  const rows = data as unknown as ApplicationRow[];
+  const creators = await creatorSummaries(
+    supabase,
+    rows.map((row) => row.creator_profile_id),
+  );
+  return rows.map((row) => toBusinessApplication(row, creators));
+}
+
 /** One owned application, with campaign and creator display data. */
 export async function getBusinessApplication(
   userId: string,
@@ -113,9 +139,46 @@ export async function getBusinessApplication(
   return toBusinessApplication(row, creators);
 }
 
+/** Application counts grouped by campaign, scoped to the supplied campaign
+ *  list. The dashboard shows counts only — creator names stay on the dedicated
+ *  Applications and Messages pages. */
+export async function listBusinessCampaignApplicationGroups(
+  userId: string,
+  campaigns: Campaign[],
+): Promise<BusinessCampaignDashboardItem[]> {
+  if (campaigns.length === 0) return [];
+
+  const supabase = await createClient();
+  const campaignIds = campaigns.map((campaign) => campaign.id);
+  const { data, error } = await supabase
+    .from("campaign_applications")
+    .select("campaign_id")
+    .in("campaign_id", campaignIds)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return campaigns.map((campaign) => ({
+      campaign,
+      applicationCount: 0,
+    }));
+  }
+
+  const rows = data as DashboardApplicationRow[];
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    counts.set(row.campaign_id, (counts.get(row.campaign_id) ?? 0) + 1);
+  }
+
+  return campaigns.map((campaign) => ({
+    campaign,
+    applicationCount: counts.get(campaign.id) ?? 0,
+  }));
+}
+
 /**
- * Shortlist, accept or reject an application. The client-side transition
- * check gives a friendly message; the database trigger is authoritative.
+ * Accept, finalize or reject an application. The client-side transition
+ * check gives a friendly message; the database trigger and the finalization
+ * RPCs are authoritative.
  */
 export async function reviewBusinessApplication(
   userId: string,
@@ -131,18 +194,44 @@ export async function reviewBusinessApplication(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("campaign_applications")
-    .update({ status: decision })
-    .eq("id", applicationId)
-    .select("id, status")
-    .maybeSingle();
 
-  if (error || !data) {
-    return { ok: false, message: "Could not update this application." };
+  // Finalizing and declining an accepted applicant also update the linked
+  // collaborations. Those multi-table writes run atomically in the database.
+  if (decision === "finalized") {
+    const { error } = await supabase.rpc("finalize_campaign_application", {
+      p_application_id: applicationId,
+    });
+    if (error) {
+      return {
+        ok: false,
+        message: error.message || "Could not finalize this application.",
+      };
+    }
+  } else if (decision === "rejected" && application.status === "accepted") {
+    const { error } = await supabase.rpc("reject_accepted_application", {
+      p_application_id: applicationId,
+    });
+    if (error) {
+      return {
+        ok: false,
+        message: error.message || "Could not decline this application.",
+      };
+    }
+  } else {
+    const { data, error } = await supabase
+      .from("campaign_applications")
+      .update({ status: decision })
+      .eq("id", applicationId)
+      .select("id, status")
+      .maybeSingle();
+
+    if (error || !data) {
+      return { ok: false, message: "Could not update this application." };
+    }
   }
+
   return {
     ok: true,
-    data: { id: data.id, status: data.status as ApplicationStatus },
+    data: { id: applicationId, status: decision },
   };
 }

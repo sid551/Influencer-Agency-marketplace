@@ -12,6 +12,7 @@ import {
   updateBusinessCollaborationStatusAction,
 } from "@/app/business/collaborations/actions";
 import type { FormActionState } from "@/types/action-state.types";
+import { DEFAULT_CURRENCY } from "@/lib/money";
 import {
   businessCollaborationTermsSchema,
   type BusinessCollaborationTermsValues,
@@ -155,7 +156,7 @@ export function BusinessCollaborationTermsForm({
     defaultValues: {
       terms: terms ?? "",
       agreed_price: agreedPrice !== null ? String(agreedPrice) : "",
-      currency,
+      currency: currency === DEFAULT_CURRENCY ? currency : DEFAULT_CURRENCY,
       deadline: deadline ? deadline.slice(0, 10) : "",
     },
   });
@@ -206,7 +207,7 @@ export function BusinessCollaborationTermsForm({
                 <FormItem>
                   <FormLabel>Currency</FormLabel>
                   <FormControl>
-                    <Input maxLength={3} placeholder="USD" {...field} />
+                    <Input placeholder="INR" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

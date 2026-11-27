@@ -8,18 +8,17 @@ import {
   businessProfileSchema,
   campaignCreateSchema,
   campaignUpdateSchema,
-  collaborationInvitationSchema,
 } from "@/lib/validations/business";
 
 const validCampaign = {
   title: "Summer launch campaign",
   description: "We are launching a new summer collection and need creators.",
   category: "Fashion",
-  platforms: ["instagram", "tiktok"],
+  platforms: ["instagram", "youtube"],
   collaboration_type: "paid",
   budget_min: "500",
   budget_max: "1500.50",
-  currency: "usd",
+  currency: "inr",
   deliverables: "1 reel\n2 stories",
   application_deadline: "2026-12-31",
   location: "",
@@ -73,7 +72,7 @@ describe("campaignCreateSchema", () => {
     if (parsed.success) {
       expect(parsed.data.budget_min).toBe(500);
       expect(parsed.data.budget_max).toBe(1500.5);
-      expect(parsed.data.currency).toBe("USD");
+      expect(parsed.data.currency).toBe("INR");
       expect(parsed.data.deliverables).toEqual(["1 reel", "2 stories"]);
       expect(parsed.data.application_deadline).toBe("2026-12-31");
       expect(parsed.data.location).toBeNull();
@@ -91,7 +90,7 @@ describe("campaignCreateSchema", () => {
   it("rejects unsupported platforms", () => {
     const parsed = campaignCreateSchema.safeParse({
       ...validCampaign,
-      platforms: ["myspace"],
+      platforms: ["myspace", "tiktok"],
     });
     expect(parsed.success).toBe(false);
   });
@@ -135,30 +134,11 @@ describe("campaignUpdateSchema", () => {
 
 describe("applicationDecisionSchema", () => {
   it("accepts only business review decisions", () => {
-    expect(applicationDecisionSchema.safeParse("shortlisted").success).toBe(true);
+    expect(applicationDecisionSchema.safeParse("shortlisted").success).toBe(false);
     expect(applicationDecisionSchema.safeParse("accepted").success).toBe(true);
+    expect(applicationDecisionSchema.safeParse("finalized").success).toBe(true);
     expect(applicationDecisionSchema.safeParse("rejected").success).toBe(true);
     expect(applicationDecisionSchema.safeParse("withdrawn").success).toBe(false);
-  });
-});
-
-describe("collaborationInvitationSchema", () => {
-  it("trims the message", () => {
-    const parsed = collaborationInvitationSchema.safeParse({
-      message: "  We would love to work with you on this campaign.  ",
-    });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      expect(parsed.data.message).toBe(
-        "We would love to work with you on this campaign.",
-      );
-    }
-  });
-
-  it("rejects empty messages", () => {
-    expect(
-      collaborationInvitationSchema.safeParse({ message: "   " }).success,
-    ).toBe(false);
   });
 });
 
@@ -178,13 +158,13 @@ describe("businessCollaborationTermsSchema", () => {
     const parsed = businessCollaborationTermsSchema.safeParse({
       terms: "One reel",
       agreed_price: "750.50",
-      currency: "usd",
+      currency: "inr",
       deadline: "2026-12-31",
     });
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data.agreed_price).toBe("750.50");
-      expect(parsed.data.currency).toBe("usd");
+      expect(parsed.data.currency).toBe("INR");
     }
   });
 
@@ -193,7 +173,7 @@ describe("businessCollaborationTermsSchema", () => {
       businessCollaborationTermsSchema.safeParse({
         terms: "",
         agreed_price: "",
-        currency: "USD",
+        currency: "INR",
       }).success,
     ).toBe(false);
   });

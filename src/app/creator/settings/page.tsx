@@ -64,7 +64,7 @@ function SocialAccountsSection({
           <h2 className="text-sm font-semibold">Social accounts</h2>
           <p className="text-xs text-muted-foreground">
             Linked accounts stay unverified until manually reviewed.{" "}
-            <Link href="/creator/verification" className="underline">
+            <Link href="/creator/profile#verification" className="underline">
               Request verification
             </Link>
           </p>

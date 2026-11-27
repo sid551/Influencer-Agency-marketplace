@@ -13,8 +13,8 @@ import {
 } from "@/types/action-state.types";
 
 const DECISION_LABELS: Record<BusinessApplicationDecision, string> = {
-  shortlisted: "Application shortlisted.",
-  accepted: "Application accepted.",
+  accepted: "Application accepted. You can now negotiate and chat.",
+  finalized: "Creator finalized for this campaign.",
   rejected: "Application declined.",
 };
 
@@ -43,9 +43,11 @@ export async function reviewApplicationAction(
     return { ...EMPTY_FORM_STATE, message: result.message };
   }
 
-  revalidatePath("/business");
-  revalidatePath("/business/applications");
-  revalidatePath(`/business/applications/${id.data}`);
+  revalidatePath("/business", "layout");
+  revalidatePath("/business/campaigns", "layout");
+  revalidatePath("/business/messages");
+  revalidatePath("/business/messages/campaigns", "layout");
+  revalidatePath("/business/collaborations");
   return {
     ok: true,
     message: DECISION_LABELS[parsedDecision.data],

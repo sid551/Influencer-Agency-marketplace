@@ -10,8 +10,19 @@ import {
   listMessages,
 } from "@/services/message.service";
 import { MessageThread } from "../message-thread";
+import { ThreadContextPanel } from "@/components/messages/thread-context-panel";
+import {
+  CollaborationTermsForm,
+  CreatorDeclineButton,
+} from "@/app/creator/collaborations/collaboration-actions";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const metadata = { title: "Conversation" };
 
@@ -59,6 +70,9 @@ function ThreadView({
     detail.collaboration.business?.company_name ?? "Business";
   const campaignTitle = detail.collaboration.campaign?.title;
   const status = detail.collaboration.status.replace(/_/g, " ");
+  const canNegotiate = ["negotiating", "agreement_pending"].includes(
+    detail.collaboration.status,
+  );
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
@@ -80,6 +94,32 @@ function ThreadView({
           {status}
         </Badge>
       </div>
+
+      <ThreadContextPanel collaboration={detail.collaboration} />
+
+      {canNegotiate ? (
+        <div className="mt-6">
+          <CollaborationTermsForm
+            collaborationId={detail.collaboration.id}
+            terms={detail.collaboration.terms}
+            agreedPrice={detail.collaboration.agreed_price}
+            currency={detail.collaboration.currency}
+            deadline={detail.collaboration.deadline}
+          />
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Not interested?</CardTitle>
+              <CardDescription>
+                Declining closes this negotiation and returns the application
+                to the business.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CreatorDeclineButton collaborationId={detail.collaboration.id} />
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       <MessageThread
         conversationId={detail.conversation.id}

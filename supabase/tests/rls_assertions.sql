@@ -27,15 +27,15 @@ begin
     and tablename in ('profiles','creator_profiles','business_profiles',
                       'social_accounts','portfolio_items','creator_services',
                       'campaigns','campaign_applications',
-                      'collaboration_requests','collaborations',
+                      'collaborations',
                       'conversations','messages','verifications',
                       'notifications','reviews')
     and rowsecurity = true;
 
-  if v_count <> 15 then
-    raise exception 'FAIL: RLS enabled on % of 15 tables', v_count;
+  if v_count <> 14 then
+    raise exception 'FAIL: RLS enabled on % of 14 tables', v_count;
   end if;
-  raise notice 'PASS: RLS enabled on all 15 tables';
+  raise notice 'PASS: RLS enabled on all 14 tables';
 end $$;
 
 -- -------------------------------------------------------------
@@ -46,7 +46,7 @@ declare
   v_expected jsonb := '{"profiles":3,"creator_profiles":2,
     "business_profiles":1,"social_accounts":3,"portfolio_items":3,
     "creator_services":3,"campaigns":3,"campaign_applications":3,
-    "collaboration_requests":1,"collaborations":2,"conversations":1,
+    "collaborations":2,"conversations":1,
     "messages":5,"notifications":5,"verifications":4,"reviews":2}'::jsonb;
   v_pair record;
   v_count int;
@@ -390,18 +390,18 @@ begin
   raise notice 'PASS: business notifications and unread messages are scoped';
 end $$;
 
--- D2. Business may shortlist a pending application
+-- D2. Business may accept a pending application
 do $$
 declare v_status text;
 begin
   update public.campaign_applications
-     set status = 'shortlisted'
+     set status = 'accepted'
    where id = 'eeeeeeee-0000-4000-8000-000000000002';
   select status into v_status
     from public.campaign_applications
    where id = 'eeeeeeee-0000-4000-8000-000000000002';
-  if v_status <> 'shortlisted' then
-    raise exception 'FAIL: business could not shortlist (status %)', v_status;
+  if v_status <> 'accepted' then
+    raise exception 'FAIL: business could not accept (status %)', v_status;
   end if;
   raise notice 'PASS: business can progress application statuses';
 end $$;

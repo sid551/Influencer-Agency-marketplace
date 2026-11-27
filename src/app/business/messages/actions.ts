@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
 import { messageSchema } from "@/lib/validations/collaboration";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
+  getOrOpenApplicationConversation,
   markConversationRead,
   sendMessage,
 } from "@/services/message.service";
@@ -62,9 +64,28 @@ export async function sendMessageAction(
 
   revalidatePath("/business", "layout");
   revalidatePath("/business/messages");
+  revalidatePath("/business/messages/campaigns", "layout");
   revalidatePath(`/business/messages/${id.data}`);
 
   return { ...EMPTY_STATE, ok: true, sent: result.data };
+}
+
+/** Open (or reuse) the thread for an accepted campaign applicant. */
+export async function openApplicationConversationAction(
+  applicationId: string,
+  campaignId: string,
+): Promise<void> {
+  const id = uuidSchema.safeParse(applicationId);
+  if (!id.success) return;
+
+  const { user } = await requireBusiness();
+  const result = await getOrOpenApplicationConversation(user.id, id.data);
+  if (!result.ok) return;
+
+  revalidatePath("/business", "layout");
+  revalidatePath("/business/messages");
+  revalidatePath(`/business/messages/campaigns/${campaignId}`);
+  redirect(`/business/messages/${result.data.id}`);
 }
 
 /** Clear the unread badge when a thread is opened or new mail arrives. */
@@ -80,4 +101,5 @@ export async function markConversationReadAction(
 
   revalidatePath("/business", "layout");
   revalidatePath("/business/messages");
+  revalidatePath("/business/messages/campaigns", "layout");
 }

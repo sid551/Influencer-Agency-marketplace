@@ -6,13 +6,13 @@ import { Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { CampaignFormDefaults } from "@/lib/campaign-form-defaults";
 import {
   CAMPAIGN_PLATFORMS,
 } from "@/lib/validations/business";
 import {
   CAMPAIGN_STATUSES,
   COLLABORATION_TYPES,
-  type Campaign,
 } from "@/types/campaign.types";
 import {
   EMPTY_FORM_STATE,
@@ -21,42 +21,6 @@ import {
 
 const selectClass =
   "flex h-9 w-full rounded-xl border border-input bg-card/80 px-3 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
-
-export interface CampaignFormDefaults {
-  campaignId: string;
-  title: string;
-  description: string;
-  category: string;
-  platforms: string[];
-  collaboration_type: string;
-  budget_min: string;
-  budget_max: string;
-  currency: string;
-  deliverables: string;
-  application_deadline: string;
-  location: string;
-  status: string;
-}
-
-export function campaignFormDefaults(
-  campaign?: Campaign | null,
-): CampaignFormDefaults {
-  return {
-    campaignId: campaign?.id ?? "",
-    title: campaign?.title ?? "",
-    description: campaign?.description ?? "",
-    category: campaign?.category ?? "",
-    platforms: campaign?.platforms ?? ["instagram"],
-    collaboration_type: campaign?.collaboration_type ?? "paid",
-    budget_min: campaign?.budget_min != null ? String(campaign.budget_min) : "",
-    budget_max: campaign?.budget_max != null ? String(campaign.budget_max) : "",
-    currency: campaign?.currency ?? "USD",
-    deliverables: campaign?.deliverables.join("\n") ?? "",
-    application_deadline: campaign?.application_deadline?.slice(0, 10) ?? "",
-    location: campaign?.location ?? "",
-    status: campaign?.status ?? "draft",
-  };
-}
 
 export function CampaignForm({
   action,
@@ -159,7 +123,7 @@ export function CampaignForm({
         </div>
         <div className="grid gap-2">
           <label htmlFor="currency" className="text-sm font-medium">Currency</label>
-          <Input id="currency" name="currency" maxLength={3} defaultValue={defaultValues.currency} />
+          <Input id="currency" name="currency" defaultValue={defaultValues.currency} readOnly />
           <FieldError messages={state.fieldErrors.currency} />
         </div>
       </div>

@@ -1,36 +1,27 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { ArrowRightIcon, CalendarDaysIcon, InboxIcon } from "lucide-react";
+import { ArrowRightIcon, CalendarDaysIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
-import {
-  listIncomingInvitations,
-  listOwnCollaborations,
-} from "@/services/collaboration.service";
+import { formatMoney } from "@/lib/money";
+import { listOwnCollaborations } from "@/services/collaboration.service";
 import type {
-  CollaborationInvitation,
   CollaborationListItem,
   CollaborationStatus,
 } from "@/types/collaboration.types";
-import {
-  InvitationActions,
-  OpenConversationButton,
-} from "./collaboration-actions";
+import { OpenConversationButton } from "./collaboration-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 export const metadata = { title: "My collaborations" };
 
-/** Collaborations and pending invitations for the signed-in creator. */
+/** Collaborations created from the creator's accepted campaign applications. */
 export default function CreatorCollaborationsPage() {
   return (
     <Suspense fallback={<CollaborationsSkeleton />}>
@@ -42,14 +33,9 @@ export default function CreatorCollaborationsPage() {
 async function CollaborationsLoader() {
   await connection();
   const { user } = await requireCreator();
-  const [collaborations, invitations] = await Promise.all([
-    listOwnCollaborations(user.id),
-    listIncomingInvitations(user.id),
-  ]);
+  const collaborations = await listOwnCollaborations(user.id);
 
-  return (
-    <CollaborationsView collaborations={collaborations} invitations={invitations} />
-  );
+  return <CollaborationsView collaborations={collaborations} />;
 }
 
 const STATUS_BADGES: Record<
@@ -90,77 +76,25 @@ function formatDate(value: string | null) {
 
 function CollaborationsView({
   collaborations,
-  invitations,
 }: {
   collaborations: CollaborationListItem[];
-  invitations: CollaborationInvitation[];
 }) {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">My collaborations</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage active work, agreements, and invitations from businesses.
+          Manage active work, agreements, and conversations from businesses.
         </p>
       </div>
 
       <section className="mt-8">
-        <div className="flex items-center gap-2">
-          <InboxIcon className="size-4 text-muted-foreground" />
-          <h2 className="text-lg font-medium">Invitations</h2>
-          {invitations.length > 0 ? (
-            <Badge variant="secondary" className="text-xs">
-              {invitations.length}
-            </Badge>
-          ) : null}
-        </div>
-
-        {invitations.length === 0 ? (
-          <Card className="mt-3">
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              No pending invitations right now.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="mt-3 grid gap-4">
-            {invitations.map((invitation) => (
-              <Card key={invitation.id}>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {invitation.business?.company_name ?? "A business"}
-                    {invitation.campaign?.title ? (
-                      <span className="ml-2 font-normal text-muted-foreground">
-                        · {invitation.campaign.title}
-                      </span>
-                    ) : null}
-                  </CardTitle>
-                  <CardDescription>
-                    {invitation.business?.industry ?? "Invitation to collaborate"}
-                  </CardDescription>
-                </CardHeader>
-                {invitation.message ? (
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {invitation.message}
-                    </p>
-                  </CardContent>
-                ) : null}
-                <CardFooter className="border-t pt-4">
-                  <InvitationActions requestId={invitation.id} />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="mt-10">
         <h2 className="text-lg font-medium">Active and past work</h2>
         {collaborations.length === 0 ? (
           <Card className="mt-3">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              You don&apos;t have any collaborations yet. Accept an invitation
-              or apply to a campaign to get started.
+              You don&apos;t have any collaborations yet. Apply to a campaign to
+              get started.
             </CardContent>
           </Card>
         ) : (
@@ -179,8 +113,8 @@ function CollaborationsView({
                       {collaboration.business?.company_name ?? "Business"}
                       {collaboration.agreed_price !== null ? (
                         <span>
-                          {" · "}${collaboration.agreed_price}{" "}
-                          {collaboration.currency}
+                          {" · "}
+                          {formatMoney(collaboration.agreed_price, collaboration.currency)}
                         </span>
                       ) : null}
                     </p>

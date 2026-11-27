@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 import { COLLABORATION_STATUSES } from "@/types/collaboration.types";
+import { currencySchema } from "@/lib/validations/currency";
 import { optionalHttpUrlSchema } from "@/lib/validations/url";
 
 /**
@@ -30,10 +31,7 @@ export const collaborationTermsSchema = z.object({
     .regex(/^\d+(\.\d{1,2})?$/, {
       error: "Enter a valid price with up to two decimal places.",
     }),
-  currency: z
-    .string()
-    .trim()
-    .regex(/^[a-zA-Z]{3}$/, { error: "Currency must be a 3-letter code." }),
+  currency: currencySchema,
   deadline: z.iso.date({ error: "Use a valid YYYY-MM-DD deadline." }).optional(),
 });
 

@@ -21,7 +21,7 @@ describe("campaignApplicationSchema", () => {
   const valid = {
     proposal,
     expected_price: "1250.50",
-    currency: "usd",
+    currency: "inr",
   };
 
   it("normalises price and currency for the database", () => {
@@ -29,7 +29,7 @@ describe("campaignApplicationSchema", () => {
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data.expected_price).toBe(1250.5);
-      expect(parsed.data.currency).toBe("USD");
+      expect(parsed.data.currency).toBe("INR");
     }
   });
 
@@ -41,6 +41,9 @@ describe("campaignApplicationSchema", () => {
       expect(campaignApplicationSchema.safeParse({ ...valid, expected_price }).success).toBe(false);
     }
     expect(campaignApplicationSchema.safeParse({ ...valid, currency: "dollars" }).success).toBe(
+      false,
+    );
+    expect(campaignApplicationSchema.safeParse({ ...valid, currency: "USD" }).success).toBe(
       false,
     );
   });
@@ -57,21 +60,21 @@ describe("collaboration schemas", () => {
     expect(
       collaborationTermsSchema.safeParse({
         agreed_price: "99.99",
-        currency: "USD",
+        currency: "INR",
         deadline: "2026-12-31",
       }).success,
     ).toBe(true);
     expect(
       collaborationTermsSchema.safeParse({
         agreed_price: "99.999",
-        currency: "US",
+        currency: "USD",
         deadline: "12/31/2026",
       }).success,
     ).toBe(false);
     expect(
       collaborationTermsSchema.safeParse({
         agreed_price: "99.99",
-        currency: "USD",
+        currency: "INR",
         deadline: "2026-99-99",
       }).success,
     ).toBe(false);

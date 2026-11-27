@@ -1,18 +1,18 @@
 import type {
   ApplicationStatus,
+  Campaign,
   CampaignStatus,
-  CollaborationRequest,
-  CollaborationRequestStatus,
 } from "./campaign.types";
 import type {
   CollaborationListItem,
   CollaborationStatus,
   Conversation,
+  ConversationCollaboration,
   Message,
 } from "./collaboration.types";
 import type { CreatorDirectoryEntry } from "./creator.types";
 
-/** Public-safe creator summary shown next to applications and invitations. */
+/** Public-safe creator summary shown next to applications and collaborations. */
 export type BusinessCreator = Pick<
   CreatorDirectoryEntry,
   "profile_id" | "full_name" | "username" | "avatar_url" | "city" | "state" | "niches"
@@ -34,13 +34,6 @@ export interface BusinessApplication {
   creator: BusinessCreator | null;
 }
 
-/** An invitation sent by the signed-in business. */
-export interface BusinessInvitation extends CollaborationRequest {
-  status: CollaborationRequestStatus;
-  campaign: { id: string; title: string } | null;
-  creator: BusinessCreator | null;
-}
-
 /** A collaboration owned by the signed-in business, with the creator's
  *  public directory details and the linked conversation id. */
 export interface BusinessCollaboration
@@ -55,23 +48,57 @@ export interface BusinessConversationListItem {
   collaboration_id: string;
   created_at: string;
   updated_at: string;
-  collaboration: {
-    id: string;
-    status: CollaborationStatus;
-    creator: BusinessCreator | null;
-    campaign: { id: string; title: string } | null;
-  } | null;
+  collaboration:
+    | (ConversationCollaboration & {
+        creator: BusinessCreator | null;
+      })
+    | null;
   lastMessage: Message | null;
   unreadCount: number;
 }
 
-/** A business-owned thread plus its collaboration context. */
+/** A business-owned thread plus its collaboration and application context. */
 export interface BusinessConversationDetail {
   conversation: Conversation;
-  collaboration: {
-    id: string;
-    status: CollaborationStatus;
+  collaboration: ConversationCollaboration & {
     creator: BusinessCreator | null;
-    campaign: { id: string; title: string } | null;
+    applicationId: string | null;
+    applicationStatus: ApplicationStatus | null;
   };
+}
+
+/** A campaign shown in the business's campaign-wise message inbox. */
+export interface BusinessMessageCampaign {
+  id: string;
+  title: string;
+  status: CampaignStatus;
+  applicationCount: number;
+  acceptedCount: number;
+  unreadCount: number;
+  lastActivityAt: string | null;
+  lastMessage: Message | null;
+}
+
+/** A creator/applicant shown inside one campaign's message inbox. */
+export interface BusinessCampaignApplicantThread {
+  applicationId: string;
+  campaignId: string;
+  creator: BusinessCreator | null;
+  applicationStatus: ApplicationStatus;
+  proposal: string;
+  expectedPrice: number;
+  currency: string;
+  appliedAt: string;
+  collaborationId: string | null;
+  collaborationStatus: CollaborationStatus | null;
+  conversationId: string | null;
+  lastMessage: Message | null;
+  unreadCount: number;
+  updatedAt: string | null;
+}
+
+/** One owned campaign with its own application count. */
+export interface BusinessCampaignDashboardItem {
+  campaign: Campaign;
+  applicationCount: number;
 }

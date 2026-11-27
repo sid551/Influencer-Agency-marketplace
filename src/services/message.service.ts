@@ -1,14 +1,22 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { getBusinessApplication } from "./business-application.service";
+import { listBusinessCampaigns } from "./business-campaign.service";
 import type { ServiceResult } from "./profile.service";
 import type {
+  BusinessCampaignApplicantThread,
   BusinessConversationDetail,
-  BusinessConversationListItem,
+  BusinessMessageCampaign,
 } from "@/types/business.types";
+import {
+  MESSAGEABLE_APPLICATION_STATUSES,
+  type ApplicationStatus,
+} from "@/types/campaign.types";
 import type {
   CollaborationStatus,
   Conversation,
+  ConversationCampaign,
   ConversationDetail,
   ConversationListItem,
   Message,
@@ -18,13 +26,21 @@ import {
   type SupabaseClient,
 } from "./business-collaboration.service";
 
+/** Campaign join shared by every conversation header query. */
+const CAMPAIGN_COLUMNS =
+  "campaigns ( id, title, description, budget_min, budget_max, currency, deliverables, platforms )";
+
 interface ThreadCollaboration {
   id: string;
   status: string;
+  agreed_price: number | null;
+  currency: string;
+  terms: string | null;
+  deadline: string | null;
   business_profiles: {
     company_name: string | null;
   } | null;
-  campaigns: { id: string; title: string } | null;
+  campaigns: ConversationCampaign | null;
 }
 
 type ConversationRow = Conversation & {
@@ -34,18 +50,24 @@ type ConversationRow = Conversation & {
 interface BusinessThreadCollaboration {
   id: string;
   status: string;
+  agreed_price: number | null;
+  currency: string;
+  terms: string | null;
+  deadline: string | null;
   creator_profile_id: string;
-  campaigns: { id: string; title: string } | null;
+  application_id: string | null;
+  campaign_applications: { status: string } | null;
+  campaigns: ConversationCampaign | null;
 }
-
-type BusinessConversationRow = Conversation & {
-  collaborations: BusinessThreadCollaboration | null;
-};
 
 function toThreadHeader(collaboration: ThreadCollaboration): ConversationDetail["collaboration"] {
   return {
     id: collaboration.id,
     status: collaboration.status as ConversationDetail["collaboration"]["status"],
+    agreed_price: collaboration.agreed_price,
+    currency: collaboration.currency,
+    terms: collaboration.terms,
+    deadline: collaboration.deadline,
     business: collaboration.business_profiles
       ? {
           company_name: collaboration.business_profiles.company_name,
@@ -103,9 +125,9 @@ export async function listCreatorConversations(
     .select(
       `id, collaboration_id, created_at, updated_at,
       collaborations!inner (
-        id, status,
+        id, status, agreed_price, currency, terms, deadline,
         business_profiles ( company_name ),
-        campaigns ( id, title )
+        ${CAMPAIGN_COLUMNS}
       )`,
     )
     .in("collaboration_id", collaborationIds)
@@ -152,9 +174,9 @@ export async function getCreatorConversation(
   const { data: collaboration, error: collaborationError } = await supabase
     .from("collaborations")
     .select(
-      `id, status,
+      `id, status, agreed_price, currency, terms, deadline,
       business_profiles ( company_name ),
-      campaigns ( id, title )`,
+      ${CAMPAIGN_COLUMNS}`,
     )
     .eq("id", data.collaboration_id)
     .eq("creator_profile_id", userId)
@@ -310,63 +332,207 @@ async function ownBusinessCollaborationIds(userId: string): Promise<string[]> {
   return data.map((row) => row.id);
 }
 
-/** Business inbox: threads from business-owned collaborations, newest first. */
-export async function listBusinessConversations(
+type CampaignApplicationRow = {
+  id: string;
+  campaign_id: string;
+  creator_profile_id: string;
+  proposal: string;
+  expected_price: number;
+  currency: string;
+  status: string;
+  created_at: string;
+};
+
+type MessageCollaborationRow = {
+  id: string;
+  campaign_id: string | null;
+  application_id: string | null;
+  creator_profile_id: string;
+  status: string;
+};
+
+type MessageConversationRow = {
+  id: string;
+  collaboration_id: string;
+  updated_at: string;
+};
+
+/** Campaign-wise business inbox: one card per owned campaign with the
+ *  application count, accepted creator count and unread message total. */
+export async function listBusinessMessageCampaigns(
   userId: string,
-): Promise<BusinessConversationListItem[]> {
-  const collaborationIds = await ownBusinessCollaborationIds(userId);
-  if (collaborationIds.length === 0) return [];
+): Promise<BusinessMessageCampaign[]> {
+  const campaigns = await listBusinessCampaigns(userId);
+  if (campaigns.length === 0) return [];
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("conversations")
-    .select(
-      `id, collaboration_id, created_at, updated_at,
-      collaborations!inner (
-        id, status, creator_profile_id,
-        campaigns ( id, title )
-      )`,
-    )
-    .in("collaboration_id", collaborationIds)
-    .order("updated_at", { ascending: false });
+  const campaignIds = campaigns.map((campaign) => campaign.id);
+  const [applicationResult, collaborationResult] = await Promise.all([
+    supabase
+      .from("campaign_applications")
+      .select("id, campaign_id, status")
+      .in("campaign_id", campaignIds),
+    supabase
+      .from("collaborations")
+      .select("id, campaign_id, application_id, creator_profile_id, status")
+      .eq("business_profile_id", userId)
+      .in("campaign_id", campaignIds),
+  ]);
 
+  const applications = (applicationResult.data ?? []) as Array<{
+    id: string;
+    campaign_id: string;
+    status: string;
+  }>;
+  const collaborations = (collaborationResult.data ?? []) as MessageCollaborationRow[];
+  const collaborationIds = collaborations.map((row) => row.id);
+
+  const conversationRows: MessageConversationRow[] = collaborationIds.length
+    ? ((await supabase
+        .from("conversations")
+        .select("id, collaboration_id, updated_at")
+        .in("collaboration_id", collaborationIds)).data ?? []) as MessageConversationRow[]
+    : [];
+
+  const messagesByConversation = await messagesForConversations(
+    supabase,
+    conversationRows.map((row) => row.id),
+  );
+  const collaborationIdsByConversation = new Map(
+    conversationRows.map((row) => [row.id, row.collaboration_id]),
+  );
+
+  return campaigns.map((campaign) => {
+    const campaignApplications = applications.filter(
+      (row) => row.campaign_id === campaign.id,
+    );
+    const campaignCollaborations = collaborations.filter(
+      (row) => row.campaign_id === campaign.id,
+    );
+    const campaignConversations = conversationRows.filter((row) => {
+      const collaborationId = collaborationIdsByConversation.get(row.id);
+      return campaignCollaborations.some((item) => item.id === collaborationId);
+    });
+
+    const messages = campaignConversations.flatMap(
+      (row) => messagesByConversation.get(row.id) ?? [],
+    );
+    messages.sort((a, b) => b.created_at.localeCompare(a.created_at));
+
+    const activity = campaignConversations
+      .map((row) => row.updated_at)
+      .sort((a, b) => b.localeCompare(a));
+
+    return {
+      id: campaign.id,
+      title: campaign.title,
+      status: campaign.status,
+      applicationCount: campaignApplications.length,
+      acceptedCount: campaignApplications.filter((row) =>
+        MESSAGEABLE_APPLICATION_STATUSES.includes(
+          row.status as (typeof MESSAGEABLE_APPLICATION_STATUSES)[number],
+        ),
+      ).length,
+      unreadCount: messages.filter(
+        (message) =>
+          message.read_at === null && message.sender_profile_id !== userId,
+      ).length,
+      lastActivityAt: activity[0] ?? null,
+      lastMessage: messages[0] ?? null,
+    };
+  });
+}
+
+/** Applicants for one owned campaign, with their collaboration thread when
+ *  the application has been accepted and a conversation has been opened. */
+export async function listCampaignApplicantConversations(
+  userId: string,
+  campaignId: string,
+  status: ApplicationStatus | "all" = "all",
+): Promise<BusinessCampaignApplicantThread[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("campaign_applications")
+    .select(
+      `id, campaign_id, creator_profile_id, proposal, expected_price, currency,
+      status, created_at, campaigns!inner ( id )`,
+    )
+    .eq("campaign_id", campaignId)
+    .eq("campaigns.business_profile_id", userId)
+    .order("created_at", { ascending: false });
+  if (status !== "all") query = query.eq("status", status);
+
+  const { data, error } = await query;
   if (error || !data) return [];
 
-  const rows = data as unknown as BusinessConversationRow[];
+  const applications = data as unknown as CampaignApplicationRow[];
+  if (applications.length === 0) return [];
+
+  const applicationIds = applications.map((row) => row.id);
+  const { data: collaborationRows } = await supabase
+    .from("collaborations")
+    .select("id, campaign_id, application_id, creator_profile_id, status")
+    .eq("business_profile_id", userId)
+    .eq("campaign_id", campaignId)
+    .in("application_id", applicationIds);
+  const collaborations = (collaborationRows ?? []) as MessageCollaborationRow[];
+
+  const conversationRows: MessageConversationRow[] = collaborations.length
+    ? ((await supabase
+        .from("conversations")
+        .select("id, collaboration_id, updated_at")
+        .in("collaboration_id", collaborations.map((row) => row.id))).data ??
+      []) as MessageConversationRow[]
+    : [];
+
   const [messagesByConversation, creators] = await Promise.all([
     messagesForConversations(
       supabase,
-      rows.map((row) => row.id),
+      conversationRows.map((row) => row.id),
     ),
     creatorSummaries(
       supabase,
-      rows
-        .map((row) => row.collaborations?.creator_profile_id)
-        .filter((id): id is string => Boolean(id)),
+      [...new Set(applications.map((row) => row.creator_profile_id))],
     ),
   ]);
+  const conversationByCollaboration = new Map(
+    conversationRows.map((row) => [row.collaboration_id, row]),
+  );
+  const collaborationByApplication = new Map(
+    collaborations
+      .filter((row): row is MessageCollaborationRow & { application_id: string } =>
+        Boolean(row.application_id),
+      )
+      .map((row) => [row.application_id, row]),
+  );
 
-  return rows.map((row) => {
-    const messages = messagesByConversation.get(row.id) ?? [];
+  return applications.map((application) => {
+    const collaboration = collaborationByApplication.get(application.id) ?? null;
+    const conversation = collaboration
+      ? (conversationByCollaboration.get(collaboration.id) ?? null)
+      : null;
+    const messages = conversation
+      ? (messagesByConversation.get(conversation.id) ?? [])
+      : [];
     return {
-      id: row.id,
-      collaboration_id: row.collaboration_id,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      collaboration: row.collaborations
-        ? {
-            id: row.collaborations.id,
-            status: row.collaborations.status as CollaborationStatus,
-            creator: row.collaborations.creator_profile_id
-              ? (creators.get(row.collaborations.creator_profile_id) ?? null)
-              : null,
-            campaign: row.collaborations.campaigns,
-          }
-        : null,
+      applicationId: application.id,
+      campaignId: application.campaign_id,
+      creator: creators.get(application.creator_profile_id) ?? null,
+      applicationStatus: application.status as ApplicationStatus,
+      proposal: application.proposal,
+      expectedPrice: application.expected_price,
+      currency: application.currency,
+      appliedAt: application.created_at,
+      collaborationId: collaboration?.id ?? null,
+      collaborationStatus:
+        (collaboration?.status as CollaborationStatus | undefined) ?? null,
+      conversationId: conversation?.id ?? null,
       lastMessage: messages[0] ?? null,
       unreadCount: messages.filter(
-        (message) => message.read_at === null && message.sender_profile_id !== userId,
+        (message) =>
+          message.read_at === null && message.sender_profile_id !== userId,
       ).length,
+      updatedAt: conversation?.updated_at ?? null,
     };
   });
 }
@@ -388,8 +554,9 @@ export async function getBusinessConversation(
   const { data: collaboration, error: collaborationError } = await supabase
     .from("collaborations")
     .select(
-      `id, status, creator_profile_id,
-      campaigns ( id, title )`,
+      `id, status, agreed_price, currency, terms, deadline, creator_profile_id,
+      application_id, campaign_applications ( status ),
+      ${CAMPAIGN_COLUMNS}`,
     )
     .eq("id", data.collaboration_id)
     .eq("business_profile_id", userId)
@@ -405,7 +572,15 @@ export async function getBusinessConversation(
     collaboration: {
       id: row.id,
       status: row.status as CollaborationStatus,
+      agreed_price: row.agreed_price,
+      currency: row.currency,
+      terms: row.terms,
+      deadline: row.deadline,
       creator: creators.get(row.creator_profile_id) ?? null,
+      applicationId: row.application_id,
+      applicationStatus:
+        (row.campaign_applications?.status as ApplicationStatus | undefined) ??
+        null,
       campaign: row.campaigns,
     },
   };
@@ -454,6 +629,39 @@ export async function getOrOpenBusinessConversation(
   }
 
   return { ok: true, data: created as Conversation };
+}
+
+/** Open (or reuse) the thread for an accepted application. The migration's
+ *  trigger normally creates it; this is the lazy fallback for older rows. */
+export async function getOrOpenApplicationConversation(
+  userId: string,
+  applicationId: string,
+): Promise<ServiceResult<Conversation>> {
+  const application = await getBusinessApplication(userId, applicationId);
+  if (!application) return { ok: false, message: "Application not found." };
+  if (
+    !MESSAGEABLE_APPLICATION_STATUSES.includes(
+      application.status as (typeof MESSAGEABLE_APPLICATION_STATUSES)[number],
+    )
+  ) {
+    return {
+      ok: false,
+      message: "Only creators in an active negotiation can be messaged.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: collaboration } = await supabase
+    .from("collaborations")
+    .select("id")
+    .eq("application_id", applicationId)
+    .eq("business_profile_id", userId)
+    .maybeSingle();
+  if (!collaboration) {
+    return { ok: false, message: "Collaboration not found for this application." };
+  }
+
+  return getOrOpenBusinessConversation(userId, collaboration.id);
 }
 
 /** Unread messages across all business-owned threads (for the nav). */

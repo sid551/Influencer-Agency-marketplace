@@ -1,3 +1,4 @@
+import { formatMoney } from "@/lib/money";
 import type { ApplicationStatus } from "@/types/campaign.types";
 import type { CollaborationStatus } from "@/types/collaboration.types";
 
@@ -9,7 +10,9 @@ export type BadgeVariant =
 
 /** Shared badge styling for application statuses in the business area. */
 export function applicationStatusVariant(status: ApplicationStatus): BadgeVariant {
-  if (status === "accepted" || status === "shortlisted") return "default";
+  if (status === "accepted" || status === "finalized") {
+    return "default";
+  }
   if (status === "rejected") return "destructive";
   if (status === "withdrawn") return "secondary";
   return "outline";
@@ -33,10 +36,7 @@ export function formatDate(value: string | null): string {
   });
 }
 
+/** Backwards-compatible name for the shared INR money formatter. */
 export function formatPrice(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return formatMoney(amount, currency);
 }

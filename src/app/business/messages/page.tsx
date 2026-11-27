@@ -4,14 +4,14 @@ import { connection } from "next/server";
 import { MessageSquareIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
-import { listBusinessConversations } from "@/services/message.service";
-import type { BusinessConversationListItem } from "@/types/business.types";
+import { listBusinessMessageCampaigns } from "@/services/message.service";
+import type { BusinessMessageCampaign } from "@/types/business.types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata = { title: "Messages" };
 
-/** Inbox of collaboration threads with the signed-in business's creators. */
+/** Campaign-wise inbox: pick a campaign, then message its accepted creators. */
 export default function BusinessMessagesPage() {
   return (
     <Suspense fallback={<MessagesSkeleton />}>
@@ -23,11 +23,12 @@ export default function BusinessMessagesPage() {
 async function MessagesLoader() {
   await connection();
   const { user } = await requireBusiness();
-  const conversations = await listBusinessConversations(user.id);
-  return <MessagesView conversations={conversations} />;
+  const campaigns = await listBusinessMessageCampaigns(user.id);
+  return <MessagesView campaigns={campaigns} />;
 }
 
-function formatActivity(value: string) {
+function formatActivity(value: string | null) {
+  if (!value) return "No activity";
   const date = new Date(value);
   const today = new Date();
   if (
@@ -43,80 +44,74 @@ function formatActivity(value: string) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function MessagesView({
-  conversations,
-}: {
-  conversations: BusinessConversationListItem[];
-}) {
+function MessagesView({ campaigns }: { campaigns: BusinessMessageCampaign[] }) {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Conversations with the creators you collaborate with.
+          Choose a campaign to see the creators you&apos;re working with.
         </p>
       </div>
 
-      {conversations.length === 0 ? (
+      {campaigns.length === 0 ? (
         <Card className="mt-8">
           <CardContent className="flex flex-col items-center gap-2 py-14 text-center">
             <MessageSquareIcon className="size-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              No conversations yet. Open a collaboration to message a creator.
+              No campaigns yet. Create a campaign and accept an application to
+              start messaging creators.
             </p>
             <Link
-              href="/business/collaborations"
+              href="/business/campaigns/new"
               className="text-sm text-primary hover:underline"
             >
-              View collaborations
+              New campaign
             </Link>
           </CardContent>
         </Card>
       ) : (
         <div className="mt-8 grid gap-3">
-          {conversations.map((conversation) => {
-            const creator =
-              conversation.collaboration?.creator?.full_name ??
-              conversation.collaboration?.creator?.username ??
-              "Creator";
-            const campaign = conversation.collaboration?.campaign?.title;
-            return (
-              <Link
-                key={conversation.id}
-                href={`/business/messages/${conversation.id}`}
-                className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Card className="transition-colors hover:bg-muted/50">
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <span className="text-sm font-medium">{creator.charAt(0)}</span>
+          {campaigns.map((campaign) => (
+            <Link
+              key={campaign.id}
+              href={`/business/messages/campaigns/${campaign.id}`}
+              className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Card className="transition-colors hover:bg-muted/50">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                    <MessageSquareIcon className="size-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-medium">{campaign.title}</p>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {campaign.status}
+                      </Badge>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium">{creator}</p>
-                        {campaign ? (
-                          <span className="truncate text-xs text-muted-foreground">
-                            · {campaign}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {conversation.lastMessage?.body ?? "No messages yet."}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {formatActivity(conversation.updated_at)}
-                      </span>
-                      {conversation.unreadCount > 0 ? (
-                        <Badge className="text-xs">{conversation.unreadCount}</Badge>
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {campaign.applicationCount} application
+                      {campaign.applicationCount === 1 ? "" : "s"} ·{" "}
+                      {campaign.acceptedCount} accepted creator
+                      {campaign.acceptedCount === 1 ? "" : "s"}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                      {campaign.lastMessage?.body ?? "No messages yet."}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formatActivity(campaign.lastActivityAt)}
+                    </span>
+                    {campaign.unreadCount > 0 ? (
+                      <Badge className="text-xs">{campaign.unreadCount}</Badge>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       )}
     </div>
@@ -129,7 +124,7 @@ function MessagesSkeleton() {
       <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="h-20 animate-pulse" />
+          <Card key={index} className="h-24 animate-pulse" />
         ))}
       </div>
     </div>

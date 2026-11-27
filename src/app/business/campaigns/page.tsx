@@ -89,7 +89,7 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
     <li className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <Link
-          href={`/business/campaigns/${campaign.id}/edit`}
+          href={`/business/campaigns/${campaign.id}/applications`}
           className="font-medium hover:underline"
         >
           {campaign.title}
@@ -103,6 +103,11 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
         <Badge variant="outline" className="capitalize">
           {campaign.status}
         </Badge>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/business/campaigns/${campaign.id}/applications`}>
+            Applications
+          </Link>
+        </Button>
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/business/campaigns/${campaign.id}/edit`}>Edit</Link>
         </Button>
