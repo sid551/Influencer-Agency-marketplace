@@ -198,62 +198,6 @@ export type Database = {
           },
         ];
       };
-      collaboration_requests: {
-        Row: {
-          business_profile_id: string;
-          campaign_id: string | null;
-          created_at: string;
-          creator_profile_id: string;
-          id: string;
-          message: string | null;
-          status: string;
-          updated_at: string;
-        };
-        ComputedFields: never;
-        Insert: {
-          business_profile_id: string;
-          campaign_id?: string | null;
-          created_at?: string;
-          creator_profile_id: string;
-          id?: string;
-          message?: string | null;
-          status?: string;
-          updated_at?: string;
-        };
-        Update: {
-          business_profile_id?: string;
-          campaign_id?: string | null;
-          created_at?: string;
-          creator_profile_id?: string;
-          id?: string;
-          message?: string | null;
-          status?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "collaboration_requests_business_profile_id_fkey";
-            columns: ["business_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "business_profiles";
-            referencedColumns: ["profile_id"];
-          },
-          {
-            foreignKeyName: "collaboration_requests_campaign_id_fkey";
-            columns: ["campaign_id"];
-            isOneToOne: false;
-            referencedRelation: "campaigns";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "collaboration_requests_creator_profile_id_fkey";
-            columns: ["creator_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "creator_profiles";
-            referencedColumns: ["profile_id"];
-          },
-        ];
-      };
       collaborations: {
         Row: {
           agreed_price: number | null;
@@ -907,7 +851,19 @@ export type Database = {
       };
     };
     Functions: {
+      decline_creator_collaboration: {
+        Args: { p_collaboration_id: string };
+        Returns: boolean;
+      };
+      finalize_campaign_application: {
+        Args: { p_application_id: string };
+        Returns: boolean;
+      };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      reject_accepted_application: {
+        Args: { p_application_id: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

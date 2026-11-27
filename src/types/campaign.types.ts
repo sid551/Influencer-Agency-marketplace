@@ -31,40 +31,35 @@ export type CollaborationType = (typeof COLLABORATION_TYPES)[number];
 
 export const APPLICATION_STATUSES = [
   "pending",
-  "shortlisted",
   "accepted",
+  "finalized",
   "rejected",
   "withdrawn",
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
+/** Applications that have a negotiation thread. Finalized creators stay
+ *  messageable after the business chooses a winner. */
+export const MESSAGEABLE_APPLICATION_STATUSES = ["accepted", "finalized"] as const;
+
 /** Decisions a business may make on an application. Mirrors the database
- *  trigger in migration 0002, which remains the final authority. */
+ *  trigger in migration 0002 and the finalization migration, which remain
+ *  the final authority. */
 export type BusinessApplicationDecision = Extract<
   ApplicationStatus,
-  "shortlisted" | "accepted" | "rejected"
+  "accepted" | "finalized" | "rejected"
 >;
 
 export const BUSINESS_APPLICATION_TRANSITIONS: Record<
   ApplicationStatus,
   BusinessApplicationDecision[]
 > = {
-  pending: ["shortlisted", "accepted", "rejected"],
-  shortlisted: ["accepted", "rejected"],
-  accepted: [],
+  pending: ["accepted", "rejected"],
+  accepted: ["finalized", "rejected"],
+  finalized: [],
   rejected: [],
   withdrawn: [],
 };
-
-export const COLLABORATION_REQUEST_STATUSES = [
-  "pending",
-  "accepted",
-  "declined",
-  "expired",
-  "cancelled",
-] as const;
-export type CollaborationRequestStatus =
-  (typeof COLLABORATION_REQUEST_STATUSES)[number];
 
 /** Row type for public.campaigns. */
 export interface Campaign {
@@ -115,18 +110,6 @@ export interface ApplicationWithCampaign extends CampaignApplication {
     Campaign,
     "id" | "title" | "category" | "platforms" | "application_deadline" | "status"
   > | null;
-}
-
-/** Row type for public.collaboration_requests (invitations). */
-export interface CollaborationRequest {
-  id: string;
-  campaign_id: string | null;
-  creator_profile_id: string;
-  business_profile_id: string;
-  message: string | null;
-  status: CollaborationRequestStatus;
-  created_at: string;
-  updated_at: string;
 }
 
 /** Filter state for campaign discovery (URL search params). */

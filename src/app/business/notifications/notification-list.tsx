@@ -26,7 +26,6 @@ import type { Notification, NotificationType } from "@/types/collaboration.types
 
 const TYPE_ICONS: Record<NotificationType, typeof BellIcon> = {
   application_status: FileTextIcon,
-  collaboration_invitation: BellIcon,
   message: MessageSquareIcon,
   deadline: ClockIcon,
   revision_request: RefreshCwIcon,
@@ -37,7 +36,6 @@ const TYPE_ICONS: Record<NotificationType, typeof BellIcon> = {
 
 const TYPE_LABELS: Record<NotificationType, string> = {
   application_status: "Application",
-  collaboration_invitation: "Invitation",
   message: "Message",
   deadline: "Deadline",
   revision_request: "Review",

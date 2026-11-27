@@ -4,10 +4,8 @@ import { redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
 import { getOwnBusinessProfile } from "@/services/business-profile.service";
-import {
-  campaignFormDefaults,
-  CampaignForm,
-} from "@/components/business/campaign-form";
+import { campaignFormDefaults } from "@/lib/campaign-form-defaults";
+import { CampaignForm } from "@/components/business/campaign-form";
 import {
   Card,
   CardContent,

@@ -9,6 +9,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { formatMoney, formatMoneyRange } from "@/lib/money";
+
 const creatorCard = {
   name: "Aarav Mehta",
   handle: "@aarav.creates",
@@ -18,7 +20,8 @@ const creatorCard = {
 const brandCard = {
   name: "Spring campaign",
   brand: "Northstar Studio",
-  budget: "$1,200 – $1,800",
+  budgetMin: 1200,
+  budgetMax: 1800,
 };
 
 export default function HomePage() {
@@ -112,7 +115,7 @@ export default function HomePage() {
                     Typical rate
                   </p>
                   <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    $450 / deliverable
+                    {formatMoney(450)} / deliverable
                   </p>
                 </div>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
@@ -144,7 +147,7 @@ export default function HomePage() {
                     Budget
                   </p>
                   <p className="mt-0.5 text-sm font-semibold">
-                    {brandCard.budget}
+                    {formatMoneyRange(brandCard.budgetMin, brandCard.budgetMax)}
                   </p>
                 </div>
                 <span className="rounded-full bg-primary-foreground/15 px-3 py-1.5 text-xs font-semibold">
@@ -195,7 +198,7 @@ export default function HomePage() {
               Build a roster you can trust.
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Publish campaigns, review applications, invite creators, and move
+              Publish campaigns, review applications, message creators, and move
               from negotiation to finished work.
             </p>
             <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary">

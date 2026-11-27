@@ -5,9 +5,9 @@ import { ArrowRightIcon, PlusIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
 import {
-  countBusinessApplications,
-  listBusinessCampaigns,
-} from "@/services/business-campaign.service";
+  listBusinessCampaignApplicationGroups,
+} from "@/services/business-application.service";
+import { listBusinessCampaigns } from "@/services/business-campaign.service";
 import { countBusinessCollaborations } from "@/services/business-collaboration.service";
 import { getOwnBusinessProfile } from "@/services/business-profile.service";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Campaign } from "@/types/campaign.types";
+import type { BusinessCampaignDashboardItem } from "@/types/business.types";
 
 export const metadata = { title: "Business dashboard" };
 
@@ -35,13 +35,11 @@ export default function BusinessDashboardPage() {
 async function DashboardLoader() {
   await connection();
   const { user } = await requireBusiness();
-  const [businessProfile, campaigns, applicationCount, collaborationCount] =
-    await Promise.all([
-      getOwnBusinessProfile(user.id),
-      listBusinessCampaigns(user.id),
-      countBusinessApplications(user.id),
-      countBusinessCollaborations(user.id),
-    ]);
+  const [businessProfile, campaigns, collaborationCount] = await Promise.all([
+    getOwnBusinessProfile(user.id),
+    listBusinessCampaigns(user.id),
+    countBusinessCollaborations(user.id),
+  ]);
 
   if (!businessProfile?.onboarding_completed) {
     return (
@@ -66,6 +64,11 @@ async function DashboardLoader() {
     );
   }
 
+  const groups = await listBusinessCampaignApplicationGroups(user.id, campaigns);
+  const applicationCount = groups.reduce(
+    (total, group) => total + group.applicationCount,
+    0,
+  );
   const liveCount = campaigns.filter((campaign) =>
     ["published", "active"].includes(campaign.status),
   ).length;
@@ -98,22 +101,25 @@ async function DashboardLoader() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
-              <CardTitle>Recent campaigns</CardTitle>
-              <CardDescription>Your latest collaboration opportunities.</CardDescription>
+              <CardTitle>Campaigns and applications</CardTitle>
+              <CardDescription>
+                Application counts for each campaign.
+              </CardDescription>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/business/campaigns">View all</Link>
             </Button>
           </CardHeader>
           <CardContent>
-            {campaigns.length === 0 ? (
+            {groups.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No campaigns yet. Create your first one to start discovering creators.
+                No campaigns yet. Create your first one to start receiving
+                applications.
               </p>
             ) : (
               <ul className="divide-y">
-                {campaigns.slice(0, 5).map((campaign) => (
-                  <CampaignRow key={campaign.id} campaign={campaign} />
+                {groups.map((group) => (
+                  <CampaignApplicationGroup key={group.campaign.id} group={group} />
                 ))}
               </ul>
             )}
@@ -168,23 +174,36 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function CampaignRow({ campaign }: { campaign: Campaign }) {
+function CampaignApplicationGroup({
+  group,
+}: {
+  group: BusinessCampaignDashboardItem;
+}) {
+  const { campaign, applicationCount } = group;
   return (
-    <li className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
-        <Link
-          href={`/business/campaigns/${campaign.id}/edit`}
-          className="truncate text-sm font-medium hover:underline"
-        >
-          {campaign.title}
-        </Link>
-        <p className="text-xs text-muted-foreground">
-          {campaign.category} · {campaign.platforms.join(", ")}
-        </p>
+    <li className="py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            href={`/business/campaigns/${campaign.id}/applications`}
+            className="text-sm font-medium hover:underline"
+          >
+            {campaign.title}
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            {campaign.category} · {campaign.platforms.join(", ")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Applications</span>
+          <Badge variant="secondary" className="text-xs">
+            {applicationCount}
+          </Badge>
+          <Badge variant="outline" className="text-xs capitalize">
+            {campaign.status}
+          </Badge>
+        </div>
       </div>
-      <Badge variant="outline" className="shrink-0 capitalize">
-        {campaign.status}
-      </Badge>
     </li>
   );
 }
@@ -199,7 +218,7 @@ function DashboardSkeleton() {
         <Skeleton className="h-24" />
         <Skeleton className="h-24" />
       </div>
-      <Skeleton className="mt-6 h-64" />
+      <Skeleton className="mt-6 h-96" />
     </div>
   );
 }

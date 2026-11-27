@@ -15,7 +15,7 @@ function campaign(id: string, title: string, description: string): Campaign {
     collaboration_type: "paid",
     budget_min: 100,
     budget_max: 500,
-    currency: "USD",
+    currency: "INR",
     deliverables: ["1 reel"],
     application_deadline: null,
     location: null,

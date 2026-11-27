@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ChevronRightIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
+import { formatMoney } from "@/lib/money";
 import { listOwnApplications } from "@/services/campaign.service";
 import {
   Card,
@@ -85,8 +86,8 @@ function ApplicationCard({
 }) {
   const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
     pending: { variant: "outline", label: "Pending" },
-    shortlisted: { variant: "default", label: "Shortlisted" },
-    accepted: { variant: "default", label: "Accepted" },
+    accepted: { variant: "default", label: "Negotiating" },
+    finalized: { variant: "default", label: "Selected" },
     rejected: { variant: "destructive", label: "Rejected" },
     withdrawn: { variant: "secondary", label: "Withdrawn" },
   };
@@ -128,7 +129,7 @@ function ApplicationCard({
           {app.proposal.slice(0, 100)}{app.proposal.length > 100 ? "…" : ""}
         </span>
         <span className="text-muted-foreground">
-          ${app.expected_price} {app.currency}
+          {formatMoney(app.expected_price, app.currency)}
         </span>
       </CardFooter>
     </Card>

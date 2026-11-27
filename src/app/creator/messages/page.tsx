@@ -5,6 +5,7 @@ import { MessageSquareIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
 import { listCreatorConversations } from "@/services/message.service";
+import { dealLabel } from "@/lib/deal";
 import type { ConversationListItem } from "@/types/collaboration.types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +79,9 @@ function MessagesView({
             const title =
               conversation.collaboration?.business?.company_name ?? "Business";
             const campaign = conversation.collaboration?.campaign?.title;
+            const deal = conversation.collaboration
+              ? dealLabel(conversation.collaboration)
+              : null;
             return (
               <Link
                 key={conversation.id}
@@ -98,6 +102,11 @@ function MessagesView({
                           </span>
                         ) : null}
                       </div>
+                      {deal ? (
+                        <p className="mt-0.5 text-xs font-medium text-primary">
+                          {deal}
+                        </p>
+                      ) : null}
                       <p className="mt-0.5 truncate text-sm text-muted-foreground">
                         {conversation.lastMessage?.body ?? "No messages yet."}
                       </p>

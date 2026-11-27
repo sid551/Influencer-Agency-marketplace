@@ -1,5 +1,7 @@
 import * as z from "zod";
 
+import { currencySchema } from "@/lib/validations/currency";
+
 /**
  * Campaign application payloads arrive from FormData, so every field is
  * initially a string; the schema trims and transforms them for the DB.
@@ -23,11 +25,7 @@ export const campaignApplicationSchema = z.object({
       error: "Enter a valid price with up to two decimal places.",
     })
     .transform((value) => Number(value)),
-  currency: z
-    .string()
-    .trim()
-    .regex(/^[a-zA-Z]{3}$/, { error: "Currency must be a 3-letter code." })
-    .transform((value) => value.toUpperCase()),
+  currency: currencySchema,
 });
 
 export type CampaignApplicationValues = z.infer<

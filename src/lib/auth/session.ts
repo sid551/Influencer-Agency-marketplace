@@ -85,7 +85,7 @@ export async function requireBusiness(): Promise<BusinessContext> {
 
 /** Landing path for a role after login / signup / password reset. */
 export function homePathForRole(role: ProfileRole | null | undefined): string {
-  if (role === "creator") return "/creator";
+  if (role === "creator") return "/creator/discover";
   if (role === "business") return "/business";
   return "/";
 }

@@ -6,12 +6,10 @@ import type { Json } from "@/types/database.types";
 import type {
   Collaboration,
   CollaborationDetail,
-  CollaborationInvitation,
   CollaborationListItem,
   CollaborationStatus,
   Deliverable,
 } from "@/types/collaboration.types";
-import type { CollaborationRequest } from "@/types/campaign.types";
 import { CREATOR_COLLABORATION_TRANSITIONS } from "@/types/collaboration.types";
 
 interface BusinessJoin {
@@ -21,11 +19,6 @@ interface BusinessJoin {
 
 type CollaborationRow = Omit<Collaboration, "deliverables"> & {
   deliverables: unknown;
-  business_profiles: BusinessJoin | null;
-  campaigns: { id: string; title: string } | null;
-};
-
-type RequestRow = CollaborationRequest & {
   business_profiles: BusinessJoin | null;
   campaigns: { id: string; title: string } | null;
 };
@@ -154,65 +147,6 @@ export async function getCollaborationForCreator(
   };
 }
 
-/** Pending invitations addressed to the signed-in creator. */
-export async function listIncomingInvitations(
-  userId: string,
-): Promise<CollaborationInvitation[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("collaboration_requests")
-    .select(
-      `*,
-      business_profiles ( company_name, industry ),
-      campaigns ( id, title )`,
-    )
-    .eq("creator_profile_id", userId)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
-
-  if (error || !data) return [];
-
-  return (data as unknown as RequestRow[]).map((row) => {
-    const { business_profiles, campaigns, ...request } = row;
-    return {
-      ...request,
-      business: business_profiles
-        ? {
-            company_name: business_profiles.company_name,
-            industry: business_profiles.industry ?? null,
-                      }
-        : null,
-      campaign: campaigns,
-    };
-  });
-}
-
-/** Creator responds to a pending invitation. RLS limits this to their own
- *  pending requests; accepting also opens a collaboration via DB trigger. */
-export async function respondToInvitation(
-  userId: string,
-  requestId: string,
-  decision: "accepted" | "declined",
-): Promise<ServiceResult<{ id: string }>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("collaboration_requests")
-    .update({ status: decision })
-    .eq("id", requestId)
-    .eq("creator_profile_id", userId)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-
-  if (error || !data) {
-    return {
-      ok: false,
-      message: "That invitation is no longer available to respond to.",
-    };
-  }
-  return { ok: true, data: { id: data.id } };
-}
-
 /** Editable collaboration fields during negotiation. */
 export interface CollaborationTermsInput {
   terms: string | null;
@@ -307,6 +241,30 @@ export async function transitionCollaborationStatus(
   }
 
   return { ok: true, data: toCollaboration(data as unknown as CollaborationRow) };
+}
+
+/** Creator declines the work: the application is rejected and the open
+ *  negotiation is cancelled in one atomic database call. */
+export async function declineCollaborationAsCreator(
+  userId: string,
+  collaborationId: string,
+): Promise<ServiceResult<boolean>> {
+  const supabase = await createClient();
+  const { data: owned } = await supabase
+    .from("collaborations")
+    .select("id")
+    .eq("id", collaborationId)
+    .eq("creator_profile_id", userId)
+    .maybeSingle();
+  if (!owned) return { ok: false, message: "Collaboration not found." };
+
+  const { error } = await supabase.rpc("decline_creator_collaboration", {
+    p_collaboration_id: collaborationId,
+  });
+  if (error) {
+    return { ok: false, message: error.message || "Could not decline this work." };
+  }
+  return { ok: true, data: true };
 }
 
 /** Mark one deliverable as submitted (with an optional asset link). */

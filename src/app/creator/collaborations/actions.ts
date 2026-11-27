@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import { requireCreator } from "@/lib/auth/session";
 import { uuidSchema } from "@/lib/validations/ids";
@@ -15,7 +14,7 @@ import {
   getOrOpenConversation,
 } from "@/services/message.service";
 import {
-  respondToInvitation,
+  declineCollaborationAsCreator,
   submitDeliverable,
   transitionCollaborationStatus,
   updateCollaborationTerms,
@@ -55,41 +54,6 @@ function revalidateCollaborationViews(collaborationId?: string) {
   }
 }
 
-/** Accept or decline an invitation. Accepting opens the collaboration and
- *  its message thread through the database trigger. */
-export async function respondToInvitationAction(
-  requestId: string,
-  decision: "accepted" | "declined",
-  _prev: CollaborationActionState,
-  _formData: FormData,
-): Promise<CollaborationActionState> {
-  void _prev;
-  void _formData;
-  const id = uuidSchema.safeParse(requestId);
-  const choice = z.enum(["accepted", "declined"]).safeParse(decision);
-  if (!id.success || !choice.success) {
-    return { ...EMPTY_STATE, message: "Invalid request." };
-  }
-
-  const { user } = await requireCreator();
-  const result = await respondToInvitation(user.id, id.data, choice.data);
-
-  if (!result.ok) {
-    return { ...EMPTY_STATE, message: result.message };
-  }
-
-  revalidateCollaborationViews();
-  revalidatePath("/creator/messages");
-  return {
-    ...EMPTY_STATE,
-    ok: true,
-    message:
-      choice.data === "accepted"
-        ? "Invitation accepted — your collaboration is ready."
-        : "Invitation declined.",
-  };
-}
-
 /** Creator-side status change. The service mirrors the DB transition
  *  trigger so callers get a readable error instead of a raw Postgres one. */
 export async function updateCollaborationStatusAction(
@@ -123,6 +87,34 @@ export async function updateCollaborationStatusAction(
     ...EMPTY_STATE,
     ok: true,
     message: `Status updated to ${parsed.data.replace(/_/g, " ")}.`,
+  };
+}
+
+/** Creator declines the offer. The RPC rejects the application and cancels
+ *  the negotiation together so the business cannot finalize a declined creator. */
+export async function declineCollaborationAction(
+  collaborationId: string,
+  _prev: CollaborationActionState,
+  _formData: FormData,
+): Promise<CollaborationActionState> {
+  void _prev;
+  void _formData;
+  const id = uuidSchema.safeParse(collaborationId);
+  if (!id.success) return { ...EMPTY_STATE, message: "Invalid request." };
+
+  const { user } = await requireCreator();
+  const result = await declineCollaborationAsCreator(user.id, id.data);
+  if (!result.ok) {
+    return { ...EMPTY_STATE, message: result.message };
+  }
+
+  revalidateCollaborationViews(id.data);
+  revalidatePath("/creator/applications");
+  revalidatePath("/creator/messages");
+  return {
+    ...EMPTY_STATE,
+    ok: true,
+    message: "You declined this collaboration.",
   };
 }
 

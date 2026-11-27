@@ -6,10 +6,8 @@ import {
   Compass,
   Handshake,
   Images,
-  LayoutDashboard,
   MessagesSquare,
   Settings,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
@@ -43,9 +41,8 @@ export default function CreatorLayout({
     {
       label: "Workspace",
       items: [
-        { href: "/creator", label: "Dashboard", icon: LayoutDashboard, exact: true },
-        { href: "/creator/applications", label: "Applications", icon: ClipboardList },
         { href: "/creator/discover", label: "Discover", icon: Compass },
+        { href: "/creator/applications", label: "Applications", icon: ClipboardList },
         { href: "/creator/collaborations", label: "Collaborations", icon: Handshake },
       ],
     },
@@ -77,8 +74,7 @@ export default function CreatorLayout({
     {
       label: "Account",
       items: [
-        { href: "/creator/profile", label: "Profile", icon: UserRound },
-        { href: "/creator/verification", label: "Verification", icon: ShieldCheck },
+        { href: "/creator/profile", label: "Profile & verification", icon: UserRound },
         { href: "/creator/portfolio", label: "Portfolio", icon: Images },
         { href: "/creator/settings", label: "Settings", icon: Settings },
       ],
@@ -88,7 +84,7 @@ export default function CreatorLayout({
   return (
     <div className="min-h-screen lg:pl-72">
       <MobileNavShell
-        homeHref="/creator"
+        homeHref="/creator/discover"
         brandLabel="Creator Marketplace"
         workspaceLabel="Creator studio"
       >

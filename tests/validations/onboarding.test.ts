@@ -82,6 +82,9 @@ describe("socialAccountSchema", () => {
       false,
     );
     expect(
+      socialAccountSchema.safeParse({ platform: "tiktok", username: "mia" }).success,
+    ).toBe(false);
+    expect(
       socialAccountSchema.safeParse({ platform: "instagram", username: "m?redirect=//evil" })
         .success,
     ).toBe(false);

@@ -10,8 +10,17 @@ import {
   listMessages,
 } from "@/services/message.service";
 import { MessageThread } from "../message-thread";
+import { ThreadContextPanel } from "@/components/messages/thread-context-panel";
+import { ApplicationDecisionButton } from "@/components/business/application-review-actions";
+import { BusinessCollaborationTermsForm } from "@/components/business/business-collaboration-actions";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const metadata = { title: "Conversation" };
 
@@ -36,12 +45,14 @@ async function ThreadLoader({ params }: { params: Promise<{ id: string }> }) {
   if (!detail) notFound();
 
   const messages = await listMessages(id);
+  const campaignId = detail.collaboration.campaign?.id ?? null;
 
   return (
     <ThreadView
       detail={detail}
       messages={messages}
       currentUserId={user.id}
+      campaignId={campaignId}
     />
   );
 }
@@ -50,10 +61,12 @@ function ThreadView({
   detail,
   messages,
   currentUserId,
+  campaignId,
 }: {
   detail: NonNullable<Awaited<ReturnType<typeof getBusinessConversation>>>;
   messages: Awaited<ReturnType<typeof listMessages>>;
   currentUserId: string;
+  campaignId: string | null;
 }) {
   const creatorName =
     detail.collaboration.creator?.full_name ??
@@ -61,14 +74,28 @@ function ThreadView({
     "Creator";
   const campaignTitle = detail.collaboration.campaign?.title;
   const status = detail.collaboration.status.replace(/_/g, " ");
+  const canNegotiate = ["negotiating", "agreement_pending"].includes(
+    detail.collaboration.status,
+  );
+  const canFinalize =
+    detail.collaboration.applicationId !== null &&
+    detail.collaboration.applicationStatus === "accepted";
+  const backStatus =
+    detail.collaboration.applicationStatus === "finalized"
+      ? "finalized"
+      : "accepted";
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
-        href="/business/messages"
+        href={
+          campaignId
+            ? `/business/messages/campaigns/${campaignId}?status=${backStatus}`
+            : "/business/messages"
+        }
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
       >
-        <ArrowLeftIcon className="size-4" /> Back to messages
+        <ArrowLeftIcon className="size-4" /> Back to campaign messages
       </Link>
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -82,6 +109,43 @@ function ThreadView({
           {status}
         </Badge>
       </div>
+
+      <ThreadContextPanel collaboration={detail.collaboration} />
+
+      {canNegotiate ? (
+        <div className="mt-6">
+          <BusinessCollaborationTermsForm
+            collaborationId={detail.collaboration.id}
+            terms={detail.collaboration.terms}
+            agreedPrice={detail.collaboration.agreed_price}
+            currency={detail.collaboration.currency}
+            deadline={detail.collaboration.deadline}
+          />
+        </div>
+      ) : null}
+
+      {canFinalize ? (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Finish the selection</CardTitle>
+            <CardDescription>
+              Finalizing agrees the price and declines the other accepted
+              creators for this campaign.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <ApplicationDecisionButton
+              applicationId={detail.collaboration.applicationId!}
+              decision="finalized"
+              size="default"
+            />
+            <ApplicationDecisionButton
+              applicationId={detail.collaboration.applicationId!}
+              decision="rejected"
+            />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <MessageThread
         conversationId={detail.conversation.id}

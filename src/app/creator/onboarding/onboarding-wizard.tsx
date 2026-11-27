@@ -176,7 +176,7 @@ export function OnboardingWizard({
     setActionError(null);
     // Nothing worth saving on the review step itself.
     if (step === TOTAL_ONBOARDING_STEPS) {
-      router.push("/creator");
+      router.push("/creator/discover");
       return;
     }
     if (!validateStep(step)) return; // show what's incomplete, then decide
@@ -191,7 +191,7 @@ export function OnboardingWizard({
         }
         return;
       }
-      router.push("/creator");
+      router.push("/creator/discover");
     });
   }
 
@@ -296,10 +296,10 @@ export function OnboardingWizard({
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Your progress is saved as you go — leave and come back any time.{" "}
         <Link
-          href="/creator"
+          href="/creator/discover"
           className="underline-offset-4 hover:text-foreground hover:underline"
         >
-          Go to dashboard
+          Go to discovery
         </Link>
       </p>
     </div>

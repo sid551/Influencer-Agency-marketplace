@@ -104,7 +104,7 @@ export async function requestVerificationAction(
     return { ...EMPTY_STATE, message: result.message };
   }
 
-  revalidatePath("/creator/verification");
+  revalidatePath("/creator/profile");
   return {
     ...EMPTY_STATE,
     ok: true,
@@ -126,6 +126,6 @@ export async function cancelVerificationAction(
   const result = await cancelVerification(user.id, id.data);
   if (!result.ok) return { ...EMPTY_STATE, message: result.message };
 
-  revalidatePath("/creator/verification");
+  revalidatePath("/creator/profile");
   return { ...EMPTY_STATE, ok: true, message: "Request cancelled." };
 }

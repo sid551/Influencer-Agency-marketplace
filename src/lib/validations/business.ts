@@ -1,5 +1,6 @@
 import * as z from "zod";
 
+import { currencySchema } from "@/lib/validations/currency";
 import { uuidSchema } from "@/lib/validations/ids";
 import { optionalHttpUrlSchema } from "@/lib/validations/url";
 import { collaborationTermsSchema } from "@/lib/validations/collaboration";
@@ -20,7 +21,6 @@ export const CAMPAIGN_PLATFORMS = [
   "instagram",
   "youtube",
   "facebook",
-  "tiktok",
   "x",
   "linkedin",
   "other",
@@ -83,11 +83,7 @@ const campaignBaseSchema = z.object({
   }),
   budget_min: budgetSchema,
   budget_max: budgetSchema,
-  currency: z
-    .string()
-    .trim()
-    .regex(/^[a-zA-Z]{3}$/, { error: "Currency must be a 3-letter code." })
-    .transform((value) => value.toUpperCase()),
+  currency: currencySchema,
   deliverables: z
     .string()
     .trim()
@@ -128,19 +124,10 @@ export const campaignUpdateSchema = campaignBaseSchema
 
 /** Decisions accepted from a business reviewing an application. */
 export const applicationDecisionSchema = z.enum([
-  "shortlisted",
   "accepted",
+  "finalized",
   "rejected",
 ]);
-
-/** Invitations are immutable after insert, so the message is validated here. */
-export const collaborationInvitationSchema = z.object({
-  message: z
-    .string()
-    .trim()
-    .min(10, { error: "Write a short invitation message (at least 10 characters)." })
-    .max(1000, { error: "Invitation messages must be 1,000 characters or fewer." }),
-});
 
 /** Statuses a business may submit; the service and DB trigger both
  *  re-check the current status before accepting a transition. */
@@ -195,9 +182,6 @@ export const businessDeliverablesSchema = z
 
 export type BusinessProfileValues = z.output<typeof businessProfileSchema>;
 export type CampaignValues = z.output<typeof campaignUpdateSchema>;
-export type CollaborationInvitationValues = z.output<
-  typeof collaborationInvitationSchema
->;
 export type BusinessCollaborationTermsValues = z.output<
   typeof businessCollaborationTermsSchema
 >;

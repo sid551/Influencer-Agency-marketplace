@@ -2,9 +2,8 @@
 
 A two-sided marketplace connecting social media creators with businesses for
 paid collaborations. The creator-facing platform is complete, and the business
-side now covers onboarding, a dashboard, campaign management, application
-reviews, creator invitations, collaboration management, messaging and
-notifications.
+side now covers onboarding, campaign discovery, campaign management, application
+reviews, campaign-wise messaging, collaboration management and notifications.
 
 ## Tech stack
 
@@ -109,7 +108,7 @@ Open http://localhost:3000.
 | Email | Role | Notes |
 | --- | --- | --- |
 | `mia@example.com` | creator | Fully onboarded, active collaboration, unread messages |
-| `rahul@example.com` | creator | Partial onboarding (step 4), pending invitation |
+| `rahul@example.com` | creator | Partial onboarding (step 4) |
 | `acme@example.com` | business | Demo campaigns, collaborations, unread messages and notifications |
 
 ## Commands
@@ -134,14 +133,14 @@ Open http://localhost:3000.
   away from `/login` and `/signup`.
 - **Creator onboarding:** 12 validated steps with save/resume, review/edit,
   social-account add/remove, save & exit, and a server-side completion check
-  before the dashboard unlocks. Partial progress is stored in
+  before discovery unlocks. Partial progress is stored in
   `creator_profiles.onboarding_step` (completed-step count, never decreases).
 
 ## Implemented in Phase 4
 
-- **Dashboard and profile:** the creator dashboard shows real profile, focus
-  area and social-account data; the profile page and edit form are backed by
-  services and revalidated after each change.
+- **Profile hub:** the creator profile is the single source of truth for
+  profile, focus area, social-account and verification data; the profile page
+  and edit form are backed by services and revalidated after each change.
 
 ## Implemented in Phase 5
 
@@ -156,39 +155,47 @@ Open http://localhost:3000.
 
 ## Implemented in Phase 7
 
-- **Collaborations:** creator list and detail pages show invitations, agreed
-  terms, price, deadlines, deliverables and status. Creators can accept or
-  decline invitations, negotiate terms while an agreement is open, submit
+- **Collaborations:** creator list and detail pages show agreed terms, price,
+  deadlines, deliverables and status. Collaborations start when a business
+  accepts a creator application; creators can negotiate terms while an
+  agreement is open, submit
   deliverables, and request only the status transitions allowed by the
   database trigger (never self-approving).
 - **Messaging:** one conversation per collaboration, an inbox sorted by recent
   activity, unread counts (also shown in the creator nav), and a live thread
   backed by Supabase Realtime. Opening a thread marks the other party's
   messages as read; the sender never sets `read_at`.
-- **Database support:** `20261125000006_phase7_collaborations.sql` opens a
-  collaboration and its conversation when an invitation is accepted, and
-  bumps `conversations.updated_at` on new messages. Both use `SECURITY
+- **Database support:** `20261125000006_phase7_collaborations.sql` bumps
+  `conversations.updated_at` on new messages; newer migrations open a
+  collaboration and its conversation when an application is accepted. Both use `SECURITY
   DEFINER` functions with a fixed `search_path` so they work within the
   existing RLS model.
 
 ## Implemented in Phase 8
 
 - **Notification centre:** `/creator/notifications` lists application decisions,
-  invitations, new messages, collaboration decisions, deadlines and verification
+  new messages, collaboration decisions, deadlines and verification
   updates. Creators can filter unread items, mark one or all as read, dismiss
   notifications, and receive new rows live through Supabase Realtime. An unread
   count sits next to the nav link and revalidates with the creator layout.
 - **Event-driven delivery:** `20261125000007_phase8_notifications.sql` adds
-  `SECURITY DEFINER` triggers that emit notifications when invitations are sent,
+  `SECURITY DEFINER` triggers that emit notifications when
   application/collaboration statuses change, messages arrive, or verification
   claims are reviewed. Actor checks suppress self-notifications and seed/system
   writes; all helpers use a fixed `search_path`.
-- **Verification requests:** `/creator/verification` lets creators open manual
-  review claims for identity documents, Instagram/YouTube account ownership and
-  audience quality. Evidence uploads go to the private `verification-docs`
+- **Verification requests:** the verification section on `/creator/profile`
+  lets creators open manual review claims for identity documents,
+  Instagram/YouTube account ownership and audience quality. Evidence uploads go
+  to the private `verification-docs`
   bucket under the caller's folder, and pending/expired claims can be cancelled.
   Claim status, reviewer notes and expiry are visible to the owner; only admins
   can set a claim to `verified`.
+
+## Currency
+
+All monetary amounts are stored and displayed in Indian Rupees (INR, ₹) with
+Indian digit grouping. Existing USD amounts were relabeled as INR without
+changing their numeric values; no exchange-rate conversion was applied.
 
 ## Architecture
 
@@ -230,46 +237,57 @@ src/
 - [x] **Phase 1** — Project setup, dependencies, folder structure, Supabase configuration
 - [x] **Phase 2** — Database schema, migrations, RLS policies
 - [x] **Phase 3** — Authentication and creator onboarding
-- [x] **Phase 4** — Creator dashboard and profile
+- [x] **Phase 4** — Creator profile hub
 - [x] **Phase 5** — Social accounts and portfolio
 - [x] **Phase 6** — Campaign discovery and applications
 - [x] **Phase 7** — Collaborations and messaging
 - [x] **Phase 8** — Notifications and verification
 - [x] **Phase 9** — Testing, security review, deployment preparation
 - [x] **Phase 10** — Business onboarding, dashboard and campaign management
-- [x] **Phase 11** — Business application reviews and creator invitations
+- [x] **Phase 11** — Business application reviews and campaign collaborations
 - [x] **Phase 12** — Business collaboration management
 - [x] **Phase 13** — Business messaging and notifications
 
 ## Implemented in Phase 10
 
-- **Business access:** `business` accounts land on `/business`; `/creator` and
-  `/business` redirect role mismatches to the correct dashboard, and `/home`
-  resolves the role after authentication.
+- **Business access:** `business` accounts land on `/business`; creator accounts
+  land on `/creator/discover`; `/creator` and `/business` redirect role
+  mismatches to the correct home, and `/home` resolves the role after
+  authentication.
 - **Company onboarding and profile:** business signup creates only a `profiles`
   row, so onboarding inserts and then maintains `business_profiles` with
   validated company details.
-- **Dashboard:** campaign/application counts, recent campaigns and company
-  details, all scoped to the signed-in business by RLS.
+- **Dashboard:** campaign-wise application counts only, plus company details,
+  all scoped to the signed-in business by RLS. Applicant names stay on the
+  campaign's own applications page and in Messages.
 - **Campaign management:** businesses can create draft or published campaigns,
   edit them, and change their status; IDs and all form fields are validated on
   the server before reaching a service.
 
 ## Implemented in Phase 11
 
-- **Application reviews:** businesses see every application to their campaigns,
-  filter by campaign and status, open the full proposal, and shortlist, accept
-  or decline it. Allowed transitions mirror the database trigger; terminal
-  states have no actions.
-- **Creator invitations:** businesses can browse the public creator directory,
-  send a pending invitation with an optional campaign, and cancel pending
-  invitations. Invitation messages are immutable after insertion, matching the
-  column-level grants.
+- **Application reviews:** applications live inside their own campaign page
+  (`/business/campaigns/[id]/applications`), where businesses filter by status,
+  open the full proposal, and accept or decline it. There is no
+  global Applications list or sidebar link. A business can accept more than one
+  applicant per campaign.
+  Allowed transitions mirror the database trigger; terminal states have no
+  actions.
+- **Accepted applications:** every accepted application opens its own
+  collaboration and message thread through a database trigger; there is no
+  separate invitation flow. Price and scope stay open for negotiation — an
+  application's asking price is never fixed as the agreed price.
+- **Final selection:** after talking with the accepted creators, a business
+  agrees a price and finalizes one. The chosen collaboration becomes active;
+  the other accepted applications are declined and their open negotiations
+  are cancelled. Creators can counter-offer in chat or decline the work, which
+  rejects their application and closes the negotiation.
 
 ## Implemented in Phase 12
 
-- **Collaboration overview:** businesses see every collaboration created from
-  an accepted invitation, filter by status, and open a scoped detail page.
+- **Collaboration overview:** the business collaborations tab lists only
+  finalized collaborations (where both parties agreed), filterable by status,
+  with a scoped detail page. Negotiations stay in campaign-wise Messages.
 - **Negotiation:** both parties can edit price, currency, deadline and terms
   while the agreement is open; businesses also own the agreed deliverable list,
   with each item's status and creator-supplied asset link preserved.
@@ -285,20 +303,25 @@ src/
 
 ## Implemented in Phase 13
 
-- **Business messaging:** `/business/messages` lists collaboration threads by
-  recent activity with unread counts, and `/business/messages/[id]` renders a
-  live thread. Businesses can open the single conversation from a collaboration
-  detail page (creating it on first use), send validated messages, and mark
-  creator messages read. Ownership is checked with `business_profile_id` and
-  enforced by RLS; Realtime delivers new messages and read receipts.
+- **Business messaging:** `/business/messages` lists campaigns with per-campaign
+  application and accepted-creator counts and unread totals.
+  `/business/messages/campaigns/[campaignId]` shows that campaign's creators
+  (accepted by default, with a finalized filter), and
+  `/business/messages/[id]` renders a live thread. Both sides can negotiate
+  price and terms directly from the thread; the business can decline or
+  finalize there, and the creator can decline the work. Businesses can open a
+  thread from an accepted applicant or a collaboration detail page (creating
+  it on first use), send validated messages, and mark creator messages read.
+  Ownership is checked with `business_profile_id` and enforced by RLS;
+  Realtime delivers new messages and read receipts.
 - **Business notifications:** `/business/notifications` shows new applications,
-  invitation answers, collaboration updates and messages. Businesses can filter
+  collaboration updates and messages. Businesses can filter
   unread items, mark one or all as read, dismiss notifications, and receive new
   rows live through Realtime. Unread badges stream in the business nav.
 - **Database support:** `20261126000009_phase13_business_notifications.sql`
   adds `SECURITY DEFINER` triggers (fixed `search_path`) for creator actions that
-  previously produced no business notification: new applications, invitation
-  answers, and creator-side collaboration transitions, including `submitted`.
+  previously produced no business notification: new applications and
+  creator-side collaboration transitions, including `submitted`.
   All generated links point at implemented `/business` routes, and actor checks
   prevent self-notifications and seed/system writes.
 

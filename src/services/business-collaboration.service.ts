@@ -105,15 +105,35 @@ function toBusinessCollaboration(
   };
 }
 
-/** Every collaboration owned by the signed-in business, newest first. */
+/** Applications the business has finally selected. Only these collaborations
+ *  belong in the collaborations tab; the others are still negotiations. */
+async function finalizedApplicationIds(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("campaign_applications")
+    .select("id, campaigns!inner ( business_profile_id )")
+    .eq("status", "finalized")
+    .eq("campaigns.business_profile_id", userId);
+
+  if (error || !data) return [];
+  return (data as unknown as { id: string }[]).map((row) => row.id);
+}
+
+/** Finalized collaborations owned by the business, newest first. */
 export async function listBusinessCollaborations(
   userId: string,
 ): Promise<BusinessCollaboration[]> {
   const supabase = await createClient();
+  const applicationIds = await finalizedApplicationIds(supabase, userId);
+  if (applicationIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from("collaborations")
     .select(`*, campaigns ( id, title )`)
     .eq("business_profile_id", userId)
+    .in("application_id", applicationIds)
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
@@ -157,15 +177,19 @@ export async function getBusinessCollaboration(
   return toBusinessCollaboration(row, creators, conversations);
 }
 
-/** Dashboard count; RLS limits the rows to this business. */
+/** Dashboard count of finalized collaborations only, matching the tab. */
 export async function countBusinessCollaborations(
   userId: string,
 ): Promise<number> {
   const supabase = await createClient();
+  const applicationIds = await finalizedApplicationIds(supabase, userId);
+  if (applicationIds.length === 0) return 0;
+
   const { count, error } = await supabase
     .from("collaborations")
     .select("id", { count: "exact", head: true })
-    .eq("business_profile_id", userId);
+    .eq("business_profile_id", userId)
+    .in("application_id", applicationIds);
 
   if (error) return 0;
   return count ?? 0;

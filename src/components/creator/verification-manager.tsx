@@ -8,8 +8,8 @@ import { Loader2Icon, ShieldCheckIcon, XIcon } from "lucide-react";
 import {
   cancelVerificationAction,
   requestVerificationAction,
-} from "./actions";
-import type { VerificationActionState } from "./actions";
+} from "@/app/creator/profile/verification-actions";
+import type { VerificationActionState } from "@/app/creator/profile/verification-actions";
 import {
   REQUESTABLE_VERIFICATION_TYPES,
   VERIFICATION_EVIDENCE_MAX_BYTES,
@@ -76,20 +76,10 @@ export function VerificationManager({
   accounts: SocialAccount[];
 }) {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Verification</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Request review for your identity, social accounts or audience. Nothing is
-          marked verified until a moderator approves it.
-        </p>
-      </div>
-
-      <div className="mt-8 grid gap-6">
-        {/* Revalidation adds a claim, which remounts the form with clean state. */}
-        <RequestCard key={claims.length} accounts={accounts} />
-        <ClaimsCard claims={claims} />
-      </div>
+    <div className="grid gap-6">
+      {/* Revalidation adds a claim, which remounts the form with clean state. */}
+      <RequestCard key={claims.length} accounts={accounts} />
+      <ClaimsCard claims={claims} />
     </div>
   );
 }

@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { Loader2Icon, MessageSquareIcon } from "lucide-react";
 
 import {
+  declineCollaborationAction,
   openConversationAction,
-  respondToInvitationAction,
   saveCollaborationTermsAction,
   submitDeliverableAction,
   updateCollaborationStatusAction,
 } from "./actions";
 import type { CollaborationActionState } from "./actions";
+import { DEFAULT_CURRENCY } from "@/lib/money";
 import { collaborationTermsSchema } from "@/lib/validations/collaboration";
 import type { CollaborationTermsValues } from "@/lib/validations/collaboration";
 import {
@@ -53,41 +54,6 @@ function useActionToast(state: CollaborationActionState) {
   }, [state.message, state.ok]);
 }
 
-/** Accept/decline controls for a pending invitation. */
-export function InvitationActions({ requestId }: { requestId: string }) {
-  const [acceptState, acceptAction, accepting] = useActionState(
-    respondToInvitationAction.bind(null, requestId, "accepted"),
-    EMPTY_STATE,
-  );
-  const [declineState, declineAction, declining] = useActionState(
-    respondToInvitationAction.bind(null, requestId, "declined"),
-    EMPTY_STATE,
-  );
-  useActionToast(acceptState);
-  useActionToast(declineState);
-
-  return (
-    <div className="flex shrink-0 gap-2">
-      <form action={acceptAction}>
-        <Button type="submit" size="sm" disabled={accepting || declining}>
-          {accepting ? <Loader2Icon className="size-4 animate-spin" /> : null}
-          Accept
-        </Button>
-      </form>
-      <form action={declineAction}>
-        <Button
-          type="submit"
-          size="sm"
-          variant="outline"
-          disabled={accepting || declining}
-        >
-          Decline
-        </Button>
-      </form>
-    </div>
-  );
-}
-
 const STATUS_LABELS: Record<CollaborationStatus, string> = {
   negotiating: "Back to negotiating",
   agreement_pending: "Send for agreement",
@@ -108,7 +74,12 @@ export function CollaborationStatusActions({
   collaborationId: string;
   status: CollaborationStatus;
 }) {
-  const transitions = CREATOR_COLLABORATION_TRANSITIONS[status];
+  // Declining is handled by a dedicated action that also rejects the
+  // application; the raw "cancelled" status button would leave both sides
+  // out of sync.
+  const transitions = CREATOR_COLLABORATION_TRANSITIONS[status].filter(
+    (next) => next !== "cancelled",
+  );
   if (!transitions?.length) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -159,6 +130,28 @@ function StatusButton({
   );
 }
 
+/** Decline the work and close the application. */
+export function CreatorDeclineButton({
+  collaborationId,
+}: {
+  collaborationId: string;
+}) {
+  const [state, formAction, isPending] = useActionState(
+    declineCollaborationAction.bind(null, collaborationId),
+    EMPTY_STATE,
+  );
+  useActionToast(state);
+
+  return (
+    <form action={formAction}>
+      <Button type="submit" size="sm" variant="outline" disabled={isPending}>
+        {isPending ? <Loader2Icon className="size-4 animate-spin" /> : null}
+        Decline work
+      </Button>
+    </form>
+  );
+}
+
 /** Edit terms while the agreement is still open. */
 export function CollaborationTermsForm({
   collaborationId,
@@ -185,7 +178,7 @@ export function CollaborationTermsForm({
     defaultValues: {
       terms: terms ?? "",
       agreed_price: agreedPrice !== null ? String(agreedPrice) : "",
-      currency,
+      currency: currency === DEFAULT_CURRENCY ? currency : DEFAULT_CURRENCY,
       deadline: deadline ? deadline.slice(0, 10) : "",
     },
   });
@@ -236,7 +229,7 @@ export function CollaborationTermsForm({
                 <FormItem>
                   <FormLabel>Currency</FormLabel>
                   <FormControl>
-                    <Input maxLength={3} placeholder="USD" {...field} />
+                    <Input placeholder="INR" {...field} readOnly />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

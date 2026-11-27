@@ -43,7 +43,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 2. Auth pages: signed-in users don't need them again. /home resolves
-  //    the role and forwards to the right dashboard.
+  //    the role and forwards to the right home page.
   //    (/reset-password is deliberately excluded — it requires the
   //    session created by the email link.)
   if (signedIn && isAuthPage) {

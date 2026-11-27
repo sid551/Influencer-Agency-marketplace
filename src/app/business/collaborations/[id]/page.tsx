@@ -239,7 +239,7 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
                 <OpenConversationButton collaborationId={collaboration.id} />
               )}
               <Button variant="outline" size="sm" asChild className="mt-2">
-                <Link href="/business/invitations">View invitations</Link>
+                <Link href="/business/messages">View messages</Link>
               </Button>
             </CardContent>
           </Card>

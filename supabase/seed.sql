@@ -174,17 +174,17 @@ values
    '11111111-1111-4111-8111-111111111111',
    'Instagram Reel (integration)',
    'One 30-60s reel featuring your product, including one revision.',
-   900.00, 'USD', true),
+   900.00, 'INR', true),
   ('cccccccc-0000-4000-8000-000000000002',
    '11111111-1111-4111-8111-111111111111',
    'Story set (3 frames)',
    'Three-frame story sequence with link sticker and swipe-up.',
-   350.00, 'USD', true),
+   350.00, 'INR', true),
   ('cccccccc-0000-4000-8000-000000000003',
    '22222222-2222-4222-8222-222222222222',
    'Workout demo video',
    '30s form-check video for fitness products.',
-   400.00, 'USD', true)
+   400.00, 'INR', true)
 on conflict (id) do nothing;
 
 -- -------------------------------------------------------------
@@ -203,9 +203,9 @@ values
 looking for creators with an engaged fashion audience who can
 deliver bright, energetic content.',
    'Fashion',
-   array['instagram', 'tiktok'],
+   array['instagram'],
    'paid',
-   500.00, 1500.00, 'USD',
+   500.00, 1500.00, 'INR',
    array['1 Instagram Reel', '2 Story frames'],
    now() + interval '14 days',
    'Mumbai',
@@ -218,7 +218,7 @@ deliver bright, energetic content.',
    'Fitness',
    array['instagram', 'youtube'],
    'ugc',
-   200.00, 800.00, 'USD',
+   200.00, 800.00, 'INR',
    array['3 Reels', '1 Long-form video'],
    now() + interval '7 days',
    'Remote',
@@ -230,7 +230,7 @@ deliver bright, energetic content.',
    'Food & Beverage',
    array['instagram'],
    'sponsorship',
-   1000.00, 5000.00, 'USD',
+   1000.00, 5000.00, 'INR',
    array['1 Reel'],
    now() + interval '30 days',
    'Delhi',
@@ -252,39 +252,22 @@ audience trusts my styling recommendations. I can shoot within
 your campaign window and deliver bright, on-brand content.',
    'My niche is fashion/lifestyle and 68% of my audience is aged
 18-34 — exactly your target segment.',
-   900.00, 'USD', 'accepted'),
+   900.00, 'INR', 'accepted'),
   ('eeeeeeee-0000-4000-8000-000000000002',
    'dddddddd-0000-4000-8000-000000000001',
    '22222222-2222-4222-8222-222222222222',
    'Fitness content is my core specialty and I can show the
 collection as part of active workout routines.',
    'Engaged fitness audience with strong reel retention.',
-   650.00, 'USD', 'pending'),
+   650.00, 'INR', 'pending'),
   ('eeeeeeee-0000-4000-8000-000000000003',
    'dddddddd-0000-4000-8000-000000000002',
    '22222222-2222-4222-8222-222222222222',
    'I run monthly fitness challenges with my community and can
 document a real 30-day journey with your product.',
    'Authentic fitness UGC with measurable audience participation.',
-   400.00, 'USD', 'shortlisted')
+   400.00, 'INR', 'pending')
 on conflict (campaign_id, creator_profile_id) do nothing;
-
--- -------------------------------------------------------------
--- Pending invitation (creator side shows this as "pending
--- invitation"; sending UI is business-side, future phase)
--- -------------------------------------------------------------
-insert into public.collaboration_requests
-  (id, campaign_id, creator_profile_id, business_profile_id, message,
-   status)
-values
-  ('ffffffff-0000-4000-8000-000000000001',
-   'dddddddd-0000-4000-8000-000000000001',
-   '22222222-2222-4222-8222-222222222222',
-   '33333333-3333-4333-8333-333333333333',
-   'We loved your challenge series — would you like to join our
-summer campaign as a paid partner?',
-   'pending')
-on conflict (id) do nothing;
 
 -- -------------------------------------------------------------
 -- Collaborations
@@ -302,7 +285,7 @@ values
    '11111111-1111-4111-8111-111111111111',
    '33333333-3333-4333-8333-333333333333',
    'active',
-   900.00, 'USD',
+   900.00, 'INR',
    'One reel + two story frames, one revision round included,
 payment on approval.',
    '[{"id":"20202020-0000-4000-8000-000000000001","title":"Instagram reel","due_date":"2026-12-05","status":"pending","asset_url":null},
@@ -315,7 +298,7 @@ payment on approval.',
    '22222222-2222-4222-8222-222222222222',
    '33333333-3333-4333-8333-333333333333',
    'completed',
-   400.00, 'USD',
+   400.00, 'INR',
    'Three workout reels delivered and approved.',
    '[{"id":"20202020-0000-4000-8000-000000000003","title":"Workout reel #1","due_date":null,"status":"approved","asset_url":null},
      {"id":"20202020-0000-4000-8000-000000000004","title":"Workout reel #2","due_date":null,"status":"approved","asset_url":null}]'::jsonb,
@@ -406,7 +389,7 @@ values
     'application_status',
     'New application received',
     'Rahul Verma applied to Summer Fashion Reel Campaign.',
-    '/business/applications/eeeeeeee-0000-4000-8000-000000000002',
+    '/business/campaigns/dddddddd-0000-4000-8000-000000000001/applications',
     null,
     now() - interval '3 hours'),
    ('50505050-0000-4000-8000-000000000005',

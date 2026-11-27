@@ -21,13 +21,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COLLABORATION_STATUSES } from "@/types/collaboration.types";
 import type { CollaborationStatus } from "@/types/collaboration.types";
 import type { BusinessCollaboration } from "@/types/business.types";
 
 export const metadata = { title: "Business collaborations" };
 
-/** Collaborations created from invitations accepted by creators. */
+/** Only collaborations finalized by both parties appear here. */
+const LISTED_STATUSES: CollaborationStatus[] = [
+  "active",
+  "submitted",
+  "revision_requested",
+  "approved",
+  "completed",
+  "disputed",
+];
+
+/** Finalized collaborations — negotiations stay in Messages until selected. */
 export default function BusinessCollaborationsPage({
   searchParams,
 }: {
@@ -49,7 +58,7 @@ async function CollaborationsLoader({
   const { user } = await requireBusiness();
   const collaborations = await listBusinessCollaborations(user.id);
   const params = await searchParams;
-  const statusFilter = COLLABORATION_STATUSES.includes(
+  const statusFilter = LISTED_STATUSES.includes(
     params.status as CollaborationStatus,
   )
     ? (params.status as CollaborationStatus)
@@ -63,13 +72,14 @@ async function CollaborationsLoader({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Collaborations</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Negotiate terms, review submitted work and close out paid projects.
+          Finalized work only — review submitted work and close out paid
+          projects. Open negotiations stay in Messages.
         </p>
       </div>
 
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>All collaborations</CardTitle>
+          <CardTitle>Finalized collaborations</CardTitle>
           <CardDescription>
             {filtered.length === 0
               ? "Nothing matches these filters."
@@ -89,7 +99,7 @@ async function CollaborationsLoader({
                 className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
               >
                 <option value="">All statuses</option>
-                {COLLABORATION_STATUSES.map((status) => (
+                {LISTED_STATUSES.map((status) => (
                   <option key={status} value={status} className="capitalize">
                     {status.replace(/_/g, " ")}
                   </option>
@@ -109,7 +119,7 @@ async function CollaborationsLoader({
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {collaborations.length === 0
-                ? "No collaborations yet. Send an invitation and have a creator accept it to start one."
+                ? "No finalized collaborations yet. Finalize a creator from a campaign's applications."
                 : "Try a different status."}
             </p>
           ) : (
