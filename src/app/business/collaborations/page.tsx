@@ -117,11 +117,18 @@ async function CollaborationsLoader({
           </form>
 
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {collaborations.length === 0
-                ? "No finalized collaborations yet. Finalize a creator from a campaign's applications."
-                : "Try a different status."}
-            </p>
+            <div className="flex flex-col items-start gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-lg text-sm text-muted-foreground">
+                {collaborations.length === 0
+                  ? "No finalized collaborations yet. Review applications and select a creator to start working together."
+                  : "Try a different status."}
+              </p>
+              {collaborations.length === 0 ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/business/campaigns">Review applications</Link>
+                </Button>
+              ) : null}
+            </div>
           ) : (
             <ul className="divide-y">
               {filtered.map((collaboration) => (

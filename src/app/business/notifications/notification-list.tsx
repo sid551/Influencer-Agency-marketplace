@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { formatUtcTimestamp } from "@/lib/labels";
 import {
   deleteNotificationAction,
   markAllNotificationsReadAction,
@@ -38,7 +39,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   application_status: "Application",
   message: "Message",
   deadline: "Deadline",
-  revision_request: "Review",
+  revision_request: "Changes requested",
   approval: "Approval",
   completion: "Completed",
   system: "Account",
@@ -298,7 +299,7 @@ export function NotificationList({
   );
 }
 
-/** Deterministic UTC timestamp so server and client markup match on hydration. */
+/** Kept as a named helper so the inbox copy stays consistent. */
 function formatTimestamp(value: string): string {
-  return `${value.slice(0, 16).replace("T", " ")} UTC`;
+  return formatUtcTimestamp(value);
 }

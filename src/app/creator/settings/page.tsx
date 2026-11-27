@@ -2,40 +2,68 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { InstagramConnectCard } from "@/components/creator/instagram-connect-card";
 import { requireCreator } from "@/lib/auth/session";
+import {
+  isInstagramConfigured,
+  readInstagramNotice,
+} from "@/lib/instagram-oauth";
 import { listOwnSocialAccounts } from "@/services/social-account.service";
 import {
   SocialAccountsList,
   AddSocialAccountForm,
+  InstagramDisconnectButton,
 } from "./page-client";
 
 export const metadata = { title: "Settings" };
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 /**
  * Creator settings page. Manages linked social accounts and other
  * account preferences. Streams in behind Suspense.
  */
-export default function CreatorSettingsPage() {
+export default function CreatorSettingsPage({ searchParams }: PageProps) {
   return (
     <Suspense fallback={<SettingsSkeleton />}>
-      <SettingsLoader />
+      <SettingsLoader searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function SettingsLoader() {
+async function SettingsLoader({ searchParams }: PageProps) {
   await connection();
   const { user } = await requireCreator();
   const accounts = await listOwnSocialAccounts(user.id);
+  const notice = readInstagramNotice(await searchParams);
 
-  return <SettingsView accounts={accounts} />;
+  return (
+    <SettingsView
+      accounts={accounts}
+      notice={notice}
+      configured={isInstagramConfigured(process.env)}
+    />
+  );
 }
 
 function SettingsView({
   accounts,
+  notice,
+  configured,
 }: {
   accounts: Awaited<ReturnType<typeof listOwnSocialAccounts>>;
+  notice: ReturnType<typeof readInstagramNotice>;
+  configured: boolean;
 }) {
+  const instagramAccount = accounts.find(
+    (account) =>
+      account.platform === "instagram" &&
+      account.verification_status === "verified" &&
+      account.verification_method === "oauth",
+  );
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -46,6 +74,13 @@ function SettingsView({
       </p>
 
       <div className="mt-8 grid gap-6">
+        <InstagramConnectCard
+          account={instagramAccount}
+          returnTo="/creator/settings"
+          notice={notice}
+          configured={configured}
+          disconnectButton={<InstagramDisconnectButton />}
+        />
         <SocialAccountsSection accounts={accounts} />
       </div>
     </div>
@@ -63,7 +98,7 @@ function SocialAccountsSection({
         <div>
           <h2 className="text-sm font-semibold">Social accounts</h2>
           <p className="text-xs text-muted-foreground">
-            Linked accounts stay unverified until manually reviewed.{" "}
+            Linked accounts stay not verified until we confirm ownership.{" "}
             <Link href="/creator/profile#verification" className="underline">
               Request verification
             </Link>
@@ -74,7 +109,8 @@ function SocialAccountsSection({
       <div className="px-4 py-4">
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No accounts linked yet. Add one below.
+            No accounts linked yet. Add one with the form at the top of this
+            card.
           </p>
         ) : (
           <SocialAccountsList accounts={accounts} />

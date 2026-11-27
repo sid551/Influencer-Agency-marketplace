@@ -12,7 +12,6 @@ import {
   updateBusinessCollaborationStatusAction,
 } from "@/app/business/collaborations/actions";
 import type { FormActionState } from "@/types/action-state.types";
-import { DEFAULT_CURRENCY } from "@/lib/money";
 import {
   businessCollaborationTermsSchema,
   type BusinessCollaborationTermsValues,
@@ -32,6 +31,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -56,14 +56,20 @@ function useActionToast(state: FormActionState) {
 
 const STATUS_LABELS: Record<CollaborationStatus, string> = {
   negotiating: "Back to negotiating",
-  agreement_pending: "Send for agreement",
+  agreement_pending: "Send agreement to creator",
   active: "Start collaboration",
-  submitted: "Submit work",
-  revision_requested: "Request revisions",
+  submitted: "Mark work as submitted",
+  revision_requested: "Request changes",
   approved: "Approve work",
-  completed: "Mark complete",
+  completed: "Mark as complete",
   cancelled: "Cancel collaboration",
   disputed: "Report a dispute",
+};
+
+const CONFIRM_MESSAGES: Partial<Record<CollaborationStatus, string>> = {
+  completed: "Mark this collaboration as complete? All work should be delivered first.",
+  cancelled: "Cancel this collaboration? Both sides will be notified.",
+  disputed: "Report a dispute? Work will pause until it's resolved.",
 };
 
 /** Only shows transitions the business may request. Collaboration approval
@@ -116,7 +122,13 @@ function StatusButton({
 
   const destructive = next === "cancelled" || next === "disputed";
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      onSubmit={(event) => {
+        const message = CONFIRM_MESSAGES[next];
+        if (message && !window.confirm(message)) event.preventDefault();
+      }}
+    >
       <Button
         type="submit"
         size="sm"
@@ -156,7 +168,7 @@ export function BusinessCollaborationTermsForm({
     defaultValues: {
       terms: terms ?? "",
       agreed_price: agreedPrice !== null ? String(agreedPrice) : "",
-      currency: currency === DEFAULT_CURRENCY ? currency : DEFAULT_CURRENCY,
+      currency,
       deadline: deadline ? deadline.slice(0, 10) : "",
     },
   });
@@ -209,6 +221,10 @@ export function BusinessCollaborationTermsForm({
                   <FormControl>
                     <Input placeholder="INR" {...field} readOnly />
                   </FormControl>
+                  <FormDescription>
+                    Fixed for this collaboration so both sides see the same
+                    amount.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

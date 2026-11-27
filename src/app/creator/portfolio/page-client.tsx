@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -27,7 +28,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -54,18 +54,22 @@ import {
 import type { PortfolioItem } from "@/types/creator.types";
 
 export function PortfolioCard({ item }: { item: PortfolioItem }) {
+  const router = useRouter();
   const [state, deleteAction, isPending] = useActionState(
     deletePortfolioItem,
     { ok: false, message: null, fieldErrors: {} },
   );
+  const refreshed = useRef(false);
 
-  if (state.ok) {
-    // Item deleted — signal the parent by throwing to force a re-fetch.
-    // In practice the server re-renders on navigation; here we just
-    // clear the action state so the UI stays consistent.
-  }
+  useEffect(() => {
+    if (state.ok && !refreshed.current) {
+      refreshed.current = true;
+      router.refresh();
+    }
+  }, [state.ok, router]);
 
   function handleDelete() {
+    if (!window.confirm(`Remove "${item.title}" from your portfolio?`)) return;
     const formData = new FormData();
     formData.append("itemId", item.id);
     deleteAction(formData);
@@ -97,6 +101,11 @@ export function PortfolioCard({ item }: { item: PortfolioItem }) {
       <CardDescription className="px-4 py-2 text-sm">
         {item.description ?? "No description"}
       </CardDescription>
+      {state.message ? (
+        <p className="px-4 pb-2 text-xs text-destructive" role="alert">
+          {state.message}
+        </p>
+      ) : null}
       <CardFooter className="border-t px-4 py-3 flex items-center justify-between">
         <Badge variant="outline" className="text-xs capitalize">
           {item.media_type.replace(/_/g, " ")}
@@ -127,11 +136,13 @@ export function AddPortfolioDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [state, addAction, isPending] = useActionState(
     addPortfolioItem,
     { ok: false, message: null, fieldErrors: {} },
   );
   const [isSubmitting, startTransition] = useTransition();
+  const errorsApplied = useRef("");
 
   const form = useForm<PortfolioItemValues>({
     resolver: zodResolver(portfolioItemSchema),
@@ -142,6 +153,20 @@ export function AddPortfolioDialog({
       media_url: "",
     },
   });
+
+  useEffect(() => {
+    const key = JSON.stringify(state.fieldErrors);
+    if (key === errorsApplied.current) return;
+    errorsApplied.current = key;
+    for (const [name, messages] of Object.entries(state.fieldErrors)) {
+      if (messages?.[0]) {
+        form.setError(name as keyof PortfolioItemValues, {
+          type: "server",
+          message: messages[0],
+        });
+      }
+    }
+  }, [state.fieldErrors, form]);
 
   function onSubmit(values: PortfolioItemValues) {
     const formData = new FormData();
@@ -158,17 +183,12 @@ export function AddPortfolioDialog({
     if (state.ok) {
       onClose();
       form.reset();
+      router.refresh();
     }
-  }, [state.ok, onClose, form]);
+  }, [state.ok, onClose, form, router]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <PlusIcon className="size-4 shrink-0" />
-          Add portfolio item
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add portfolio item</DialogTitle>
@@ -182,6 +202,11 @@ export function AddPortfolioDialog({
             className="grid gap-4"
             noValidate
           >
+            {state.message ? (
+              <p className="text-sm text-destructive" role="alert">
+                {state.message}
+              </p>
+            ) : null}
             <FormField
               control={form.control}
               name="title"

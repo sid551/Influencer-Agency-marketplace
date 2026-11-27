@@ -41,8 +41,18 @@ export function VerifyEmailForm() {
         ) : (
           "We sent a confirmation link to your email address."
         )}{" "}
-        Click it to activate your account, then log in.
+        Click the link in the email — you&apos;ll be signed in automatically
+        and taken straight to your setup.
       </p>
+
+      <ul className="mt-3 grid gap-1 text-xs text-muted-foreground">
+        <li>· Nothing after a few minutes? Look in Spam or Promotions.</li>
+        <li>
+          · Only one confirmation email goes out at a time — asking again
+          resets the wait.
+        </li>
+        <li>· Wrong address? Use “Use a different email” below.</li>
+      </ul>
 
       {state.error ? (
         <Alert variant="destructive" className="mt-4">
@@ -70,10 +80,18 @@ export function VerifyEmailForm() {
               <Loader2Icon className="animate-spin" />
               Resending…
             </>
+          ) : state.message ? (
+            "Email sent"
           ) : (
             "Resend confirmation email"
           )}
         </Button>
+        {state.message ? (
+          <p className="text-xs text-muted-foreground">
+            Didn&apos;t get it? Check spam, or wait a minute before asking for
+            another link.
+          </p>
+        ) : null}
       </form>
 
       <div className="mt-6 flex items-center justify-between text-sm">

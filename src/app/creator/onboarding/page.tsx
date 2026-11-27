@@ -3,23 +3,28 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { requireCreator } from "@/lib/auth/session";
+import {
+  isInstagramConfigured,
+  readInstagramNotice,
+} from "@/lib/instagram-oauth";
 import { getOwnCreatorProfile } from "@/services/creator-profile.service";
 import { listOwnSocialAccounts } from "@/services/social-account.service";
 import { OnboardingWizard } from "./onboarding-wizard";
-import {
-  TOTAL_ONBOARDING_STEPS,
-  type OnboardingValues,
-} from "@/lib/validations/onboarding";
+import type { OnboardingValues } from "@/lib/validations/onboarding";
 import type { Profile } from "@/types/creator.types";
 
 export const metadata = { title: "Set up your profile" };
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 /**
  * Onboarding entry point. The session read streams in behind Suspense;
  * completed users are sent back to the dashboard, everyone else gets
  * the wizard resumed at their first unfinished step.
  */
-export default function OnboardingPage() {
+export default function OnboardingPage({ searchParams }: PageProps) {
   return (
     <Suspense
       fallback={
@@ -33,12 +38,12 @@ export default function OnboardingPage() {
         </div>
       }
     >
-      <OnboardingLoader />
+      <OnboardingLoader searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function OnboardingLoader() {
+async function OnboardingLoader({ searchParams }: PageProps) {
   // The Supabase session check calls Date.now(); defer it to request time
   // so prerendering the static shell stays deterministic.
   await connection();
@@ -50,16 +55,16 @@ async function OnboardingLoader() {
   }
 
   const socialAccounts = await listOwnSocialAccounts(user.id);
+  const notice = readInstagramNotice(await searchParams);
 
   return (
     <OnboardingWizard
       profile={profile}
-      initialStep={Math.min(
-        (creatorProfile?.onboarding_step ?? 0) + 1,
-        TOTAL_ONBOARDING_STEPS,
-      )}
+      initialStep={creatorProfile?.onboarding_step ?? 0}
       initialSocialAccounts={socialAccounts}
       initialValues={buildInitialValues(profile, creatorProfile)}
+      instagramNotice={notice}
+      instagramConfigured={isInstagramConfigured(process.env)}
     />
   );
 }

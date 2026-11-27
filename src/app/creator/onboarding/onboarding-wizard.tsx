@@ -21,6 +21,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { verificationStatusLabel } from "@/lib/labels";
+import type { InstagramNotice } from "@/lib/instagram-oauth";
 import {
   getStepSchema,
   TOTAL_ONBOARDING_STEPS,
@@ -28,62 +30,75 @@ import {
 } from "@/lib/validations/onboarding";
 import type { Profile, SocialAccount } from "@/types/creator.types";
 
-const STEPS: Array<{ title: string; description: string }> = [
+/**
+ * The database tracks 12 small steps, but asking someone to click "Next"
+ * twelve times is exhausting. We group related steps into five short
+ * screens and still save each underlying step individually, so progress
+ * and resuming work exactly as before.
+ */
+type WizardGroup = {
+  title: string;
+  description: string;
+  steps: number[];
+};
+
+const GROUPS: WizardGroup[] = [
   {
-    title: "What should we call you?",
-    description: "The name shown on your public profile.",
+    title: "First, the basics",
+    description: "A few details so brands know who they're talking to.",
+    steps: [1, 2, 3, 4],
   },
   {
-    title: "Pick a username",
-    description: "Your public handle — businesses will search for it.",
+    title: "What do you create?",
+    description: "This is what we use to match you with relevant briefs.",
+    steps: [5, 6, 7, 8],
   },
   {
-    title: "Add a profile photo",
-    description: "Optional, but profiles with photos get more interest.",
+    title: "Connect your Instagram",
+    description:
+      "Optional, but connecting shows brands your real numbers. You can skip this and do it later.",
+    steps: [9],
   },
   {
-    title: "Where are you based?",
-    description: "City and state help businesses filter by location.",
+    title: "How would you like to work?",
+    description: "Pick what you're open to. Your phone number stays private.",
+    steps: [10, 11],
   },
   {
-    title: "Tell us about yourself",
-    description: "What you create, and what makes it worth following.",
-  },
-  {
-    title: "Your niches",
-    description: "The topics you create about most.",
-  },
-  {
-    title: "Languages you create in",
-    description: "So businesses can match campaigns to your audience.",
-  },
-  {
-    title: "Content types",
-    description: "The formats you make — reels, long-form, podcasts…",
-  },
-  {
-    title: "Link your social accounts",
-    description: "Add the platforms you're active on.",
-  },
-  {
-    title: "How do you want to collaborate?",
-    description: "Pick everything you're open to.",
-  },
-  {
-    title: "Phone number",
-    description: "Optional — only shared after you accept a collaboration.",
-  },
-  {
-    title: "Review your profile",
-    description: "Check everything over, then finish setup.",
+    title: "One last look",
+    description: "Check everything, then you're ready to go.",
+    steps: [12],
   },
 ];
 
+const GROUP_COUNT = GROUPS.length;
+
+const STEP_CAPTIONS: Record<number, string> = {
+  1: "Your name",
+  2: "Public handle",
+  3: "Profile photo (optional)",
+  4: "Location",
+  5: "About you",
+  6: "Topics you create about",
+  7: "Languages",
+  8: "Content formats",
+  10: "Collaboration preferences",
+  11: "Phone number (optional)",
+};
+
+function groupForStep(step: number): number {
+  const index = GROUPS.findIndex((group) => group.steps.includes(step));
+  return index === -1 ? 1 : index + 1;
+}
+
 interface OnboardingWizardProps {
   profile: Profile;
+  /** Number of completed database steps (0–12). */
   initialStep: number;
   initialSocialAccounts: SocialAccount[];
   initialValues: OnboardingValues;
+  instagramNotice?: InstagramNotice | null;
+  instagramConfigured?: boolean;
 }
 
 export function OnboardingWizard({
@@ -91,10 +106,14 @@ export function OnboardingWizard({
   initialStep,
   initialSocialAccounts,
   initialValues,
+  instagramNotice,
+  instagramConfigured = true,
 }: OnboardingWizardProps) {
   const router = useRouter();
-  const [step, setStep] = useState(initialStep);
-  // Set when the user jumps from the review step to fix something:
+  const [group, setGroup] = useState(() =>
+    groupForStep(Math.min(Math.max(initialStep + 1, 1), TOTAL_ONBOARDING_STEPS)),
+  );
+  // Set when the user jumps from the review screen to fix something:
   // after saving, return straight to the review instead of walking on.
   const [returnTo, setReturnTo] = useState<number | null>(null);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>(
@@ -104,7 +123,11 @@ export function OnboardingWizard({
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<OnboardingValues>({ defaultValues: initialValues });
-  const meta = STEPS[step - 1] ?? STEPS[0];
+  const meta = GROUPS[group - 1] ?? GROUPS[0];
+  const isReview = group === GROUP_COUNT;
+  const isSocialStep = meta.steps.includes(9);
+  // Social accounts manage their own form, so don't wrap that screen in one.
+  const usesForm = !isReview && !isSocialStep;
   // Live values for the review step (useWatch is compiler-safe,
   // unlike form.watch()).
   const values = useWatch({ control: form.control }) as OnboardingValues;
@@ -113,36 +136,65 @@ export function OnboardingWizard({
     form.clearErrors();
     setActionError(null);
     setReturnTo(options?.returnTo ?? null);
-    setStep(next);
+    setGroup(next);
   }
 
-  /** Client-side validation of the current step with its Zod schema. */
-  function validateStep(target: number): boolean {
-    const schema = getStepSchema(target);
-    if (!schema) return false;
+  /** Validate every field owned by a screen and show all issues at once. */
+  function validateGroup(target: number): boolean {
+    form.clearErrors();
+    let valid = true;
 
-    const result = schema.safeParse(form.getValues());
-    if (result.success) {
-      form.clearErrors();
-      return true;
-    }
-    for (const issue of result.error.issues) {
-      const key = issue.path.join(".");
-      if (key) {
-        form.setError(key as FieldPath<OnboardingValues>, {
-          type: "manual",
-          message: issue.message,
-        });
+    for (const step of GROUPS[target - 1].steps) {
+      const schema = getStepSchema(step);
+      if (!schema) continue;
+      const result = schema.safeParse(form.getValues());
+      if (result.success) continue;
+
+      valid = false;
+      for (const issue of result.error.issues) {
+        const key = issue.path.join(".");
+        if (key) {
+          form.setError(key as FieldPath<OnboardingValues>, {
+            type: "manual",
+            message: issue.message,
+          });
+        }
       }
     }
-    return false;
+    return valid;
+  }
+
+  /** Save each database step behind this screen, one at a time. */
+  async function persistGroup(
+    target: number,
+    options?: { skipInvalid?: boolean },
+  ): Promise<boolean> {
+    const payload = form.getValues();
+
+    for (const step of GROUPS[target - 1].steps) {
+      if (step >= TOTAL_ONBOARDING_STEPS) continue; // review writes nothing
+
+      const schema = getStepSchema(step);
+      if (schema && !schema.safeParse(payload).success) {
+        if (options?.skipInvalid) continue;
+        return false;
+      }
+
+      const state = await saveOnboardingStep({ step, values: payload });
+      if (!state.ok) {
+        if (!applyFieldErrors(form, state.fieldErrors)) {
+          setActionError(state.message);
+        }
+        return false;
+      }
+    }
+    return true;
   }
 
   function handleNext() {
-    if (step === TOTAL_ONBOARDING_STEPS) {
-      // Finish: the action validates completeness server-side and
-      // redirects to the dashboard on success.
-      setActionError(null);
+    setActionError(null);
+
+    if (isReview) {
       startTransition(async () => {
         const state = await completeOnboarding();
         if (!state.ok) setActionError(state.message);
@@ -150,58 +202,109 @@ export function OnboardingWizard({
       return;
     }
 
-    setActionError(null);
-    if (!validateStep(step)) return;
+    if (!validateGroup(group)) return;
 
-    const payload = form.getValues();
-    const destination = returnTo ?? Math.min(step + 1, TOTAL_ONBOARDING_STEPS);
-
+    const destination = returnTo ?? Math.min(group + 1, GROUP_COUNT);
     startTransition(async () => {
-      const state = await saveOnboardingStep({ step, values: payload });
-      if (!state.ok) {
-        if (!applyFieldErrors(form, state.fieldErrors)) {
-          setActionError(state.message);
-        }
-        return;
-      }
-      goTo(destination);
+      const saved = await persistGroup(group);
+      if (saved) goTo(destination);
     });
   }
 
   function handleBack() {
-    if (step > 1) goTo(step - 1);
+    if (group > 1) goTo(group - 1);
   }
 
   function handleSaveAndExit() {
     setActionError(null);
-    // Nothing worth saving on the review step itself.
-    if (step === TOTAL_ONBOARDING_STEPS) {
-      router.push("/creator/discover");
+    if (isReview) {
+      router.push("/");
       return;
     }
-    if (!validateStep(step)) return; // show what's incomplete, then decide
 
-    const payload = form.getValues();
+    // Save whatever is valid and leave to the public homepage. Discovery
+    // would only redirect straight back here while setup is unfinished.
     startTransition(async () => {
-      const state = await saveOnboardingStep({ step, values: payload });
-      if (!state.ok) {
-        // Stay on the step — don't discard a draft we failed to save.
-        if (!applyFieldErrors(form, state.fieldErrors)) {
-          setActionError(state.message);
-        }
-        return;
-      }
-      router.push("/creator/discover");
+      await persistGroup(group, { skipInvalid: true });
+      router.push("/");
     });
   }
 
-  const progressPercent = Math.round((step / TOTAL_ONBOARDING_STEPS) * 100);
+  const progressPercent =
+    group === GROUP_COUNT
+      ? 100
+      : Math.round(((group - 1) / (GROUP_COUNT - 1)) * 100);
+
+  const card = isSocialStep ? (
+    <SocialAccountsStep
+      accounts={socialAccounts}
+      onChange={setSocialAccounts}
+      instagramNotice={instagramNotice}
+      instagramConfigured={instagramConfigured}
+    />
+  ) : isReview ? (
+    <ReviewStep
+      values={values}
+      profile={profile}
+      socialAccounts={socialAccounts}
+      onEdit={(step) => goTo(groupForStep(step), { returnTo: GROUP_COUNT })}
+    />
+  ) : (
+    <Form {...form}>
+      <div className="grid gap-6">
+        {meta.steps.map((step) => (
+          <div key={step} className="grid gap-2">
+            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              {STEP_CAPTIONS[step]}
+            </p>
+            <StepFields step={step} form={form} />
+          </div>
+        ))}
+      </div>
+    </Form>
+  );
+
+  const navigation = (
+    <div className="sticky bottom-0 z-20 -mx-4 mt-6 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleBack}
+        disabled={isPending || group === 1}
+      >
+        <ArrowLeftIcon />
+        Back
+      </Button>
+      <Button
+        type={usesForm ? "submit" : "button"}
+        onClick={usesForm ? undefined : handleNext}
+        disabled={isPending}
+        className="min-w-32"
+      >
+        {isPending ? (
+          <>
+            <Loader2Icon className="animate-spin" />
+            Saving…
+          </>
+        ) : isReview ? (
+          "Finish setup"
+        ) : group === GROUP_COUNT - 1 ? (
+          "Review details"
+        ) : (
+          <>
+            Save &amp; continue
+            <ArrowRightIcon />
+          </>
+        )}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
       <div className="flex items-center justify-between gap-4 text-sm">
         <span className="font-medium text-foreground">
-          Step {step} of {TOTAL_ONBOARDING_STEPS}
+          {isReview ? "Ready to finish" : `Step ${group} of ${GROUP_COUNT}`}
         </span>
         <button
           type="button"
@@ -209,7 +312,7 @@ export function OnboardingWizard({
           disabled={isPending}
           className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
         >
-          Save &amp; exit
+          Save what&apos;s done &amp; exit
         </button>
       </div>
 
@@ -219,7 +322,7 @@ export function OnboardingWizard({
         aria-valuenow={progressPercent}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Onboarding progress"
+        aria-label="Setup progress"
       >
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
@@ -231,6 +334,11 @@ export function OnboardingWizard({
         {meta.title}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>
+      {group === 1 ? (
+        <p className="mt-1 text-xs text-muted-foreground">
+          About 3 minutes in total. You can leave and come back any time.
+        </p>
+      ) : null}
 
       {actionError ? (
         <Alert variant="destructive" className="mt-4">
@@ -239,67 +347,35 @@ export function OnboardingWizard({
         </Alert>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:p-6">
-        {step === 9 ? (
-          <SocialAccountsStep
-            accounts={socialAccounts}
-            onChange={setSocialAccounts}
-          />
-        ) : step === TOTAL_ONBOARDING_STEPS ? (
-          <ReviewStep
-            values={values}
-            profile={profile}
-            socialAccounts={socialAccounts}
-            onEdit={(target) => goTo(target, { returnTo: TOTAL_ONBOARDING_STEPS })}
-          />
-        ) : (
-          <Form {...form}>
-            <div className="grid gap-6">
-              <StepFields step={step} form={form} />
-            </div>
-          </Form>
-        )}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleBack}
-          disabled={isPending || step === 1}
+      {usesForm ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleNext();
+          }}
         >
-          <ArrowLeftIcon />
-          Back
-        </Button>
-        <Button
-          type="button"
-          onClick={handleNext}
-          disabled={isPending}
-          className="min-w-32"
-        >
-          {isPending ? (
-            <>
-              <Loader2Icon className="animate-spin" />
-              Saving…
-            </>
-          ) : step === TOTAL_ONBOARDING_STEPS ? (
-            "Finish setup"
-          ) : (
-            <>
-              Next
-              <ArrowRightIcon />
-            </>
-          )}
-        </Button>
-      </div>
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:p-6">
+            {card}
+          </div>
+          {navigation}
+        </form>
+      ) : (
+        <>
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:p-6">
+            {card}
+          </div>
+          {navigation}
+        </>
+      )}
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Your progress is saved as you go — leave and come back any time.{" "}
+        Your progress is saved as you go — close this page and come back when
+        you&apos;re ready.
         <Link
-          href="/creator/discover"
-          className="underline-offset-4 hover:text-foreground hover:underline"
+          href="/contact"
+          className="ml-1 underline-offset-4 hover:text-foreground hover:underline"
         >
-          Go to discovery
+          Need help?
         </Link>
       </p>
     </div>
@@ -307,7 +383,7 @@ export function OnboardingWizard({
 }
 
 // ---------------------------------------------------------------
-// Step 12 — review
+// Final screen — review
 // ---------------------------------------------------------------
 
 interface ReviewStepProps {
@@ -391,7 +467,7 @@ function ReviewStep({ values, profile, socialAccounts, onEdit }: ReviewStepProps
           </p>
         </ReviewSection>
 
-        <ReviewSection title="Niches" editStep={6} onEdit={onEdit}>
+        <ReviewSection title="Topics" editStep={6} onEdit={onEdit}>
           {tags(values.niches)}
         </ReviewSection>
 
@@ -399,7 +475,7 @@ function ReviewStep({ values, profile, socialAccounts, onEdit }: ReviewStepProps
           {tags(values.languages)}
         </ReviewSection>
 
-        <ReviewSection title="Content types" editStep={8} onEdit={onEdit}>
+        <ReviewSection title="Content formats" editStep={8} onEdit={onEdit}>
           {tags(values.contentTypes)}
         </ReviewSection>
 
@@ -414,7 +490,7 @@ function ReviewStep({ values, profile, socialAccounts, onEdit }: ReviewStepProps
                     {account.platform}: {account.username}
                   </span>
                   <Badge variant="outline" className="text-xs">
-                    {account.verification_status}
+                    {verificationStatusLabel(account.verification_status)}
                   </Badge>
                 </li>
               ))}

@@ -46,18 +46,21 @@ export default function HomePage() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/signup"
+              href="/signup?role=creator"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-[0_10px_24px_color-mix(in_srgb,var(--primary)_22%,transparent)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
             >
-              Start as a creator
+              Find campaigns
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/signup"
+              href="/signup?role=business"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-medium text-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:bg-secondary/70"
             >
-              I&apos;m hiring creators
+              Hire creators
             </Link>
+            <p className="w-full text-xs text-muted-foreground">
+              Free to join. No card needed. Setup takes about 3 minutes.
+            </p>
           </div>
 
           <div className="mt-9 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground">
@@ -162,7 +165,7 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-5 pb-16 sm:pb-24">
         <div className="grid gap-5 md:grid-cols-2">
           <Link
-            href="/signup"
+            href="/signup?role=creator"
             className="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
           >
             <span className="flex size-11 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
@@ -185,7 +188,7 @@ export default function HomePage() {
           </Link>
 
           <Link
-            href="/signup"
+            href="/signup?role=business"
             className="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
           >
             <span className="flex size-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
@@ -206,6 +209,59 @@ export default function HomePage() {
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </span>
           </Link>
+        </div>
+      </section>
+
+      <section className="border-t border-border/70 bg-muted/30">
+        <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              How it works
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+              Three simple steps, start to finish.
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              No spreadsheets, no endless email chains. Everything stays in one
+              place so you always know what happens next.
+            </p>
+          </div>
+
+          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                step: "01",
+                title: "Set up once",
+                description:
+                  "Tell us what you make or what you're looking for. A short guided setup gets you ready in minutes.",
+              },
+              {
+                step: "02",
+                title: "Find your match",
+                description:
+                  "Browse briefs or creators, then send or review a proposal with the price and deliverables upfront.",
+              },
+              {
+                step: "03",
+                title: "Work together",
+                description:
+                  "Agree on terms, message in the same thread, and track every deliverable until the work is done.",
+              },
+            ].map((item) => (
+              <li
+                key={item.step}
+                className="rounded-3xl border border-border bg-card p-6 shadow-sm"
+              >
+                <span className="font-mono text-xs font-medium text-muted-foreground">
+                  {item.step}
+                </span>
+                <h3 className="mt-4 text-base font-semibold">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {item.description}
+                </p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 

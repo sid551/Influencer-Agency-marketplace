@@ -43,14 +43,14 @@ async function OnboardingLoader() {
         <CardHeader>
           <CardTitle>Tell us about your company</CardTitle>
           <CardDescription>
-            Creators will use these details when considering your campaigns.
-            You can change them later.
+            Just one company name is required — the rest is optional, and you
+            can change everything later.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <BusinessProfileForm
             action={saveBusinessOnboarding}
-            submitLabel={profile ? "Finish setup" : "Save and continue"}
+            submitLabel="Finish setup & go to dashboard"
             defaultValues={
               profile
                 ? {
@@ -62,6 +62,10 @@ async function OnboardingLoader() {
                 : undefined
             }
           />
+          <p className="mt-4 text-xs text-muted-foreground">
+            What happens next: you&apos;ll land on your dashboard, where you can
+            create your first campaign.
+          </p>
         </CardContent>
       </Card>
     </div>

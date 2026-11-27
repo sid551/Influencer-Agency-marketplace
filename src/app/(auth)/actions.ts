@@ -10,6 +10,7 @@ import {
   sanitizeNextPath,
 } from "@/lib/validations/auth";
 import { homePathForRole } from "@/lib/auth/session";
+import { authErrorMessage } from "@/lib/auth-error";
 import { createClient } from "@/lib/supabase/server";
 import type * as z from "zod";
 
@@ -48,27 +49,6 @@ function fieldErrorsFrom(flatten: {
 
 function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
-
-/** Supabase Auth error message → user-friendly copy. */
-function authErrorMessage(raw: string): string {
-  const message = raw.toLowerCase();
-  if (message.includes("invalid login credentials")) {
-    return "Incorrect email or password.";
-  }
-  if (message.includes("email not confirmed")) {
-    return "Confirm your email first — check your inbox for the link.";
-  }
-  if (message.includes("already registered") || message.includes("already been registered")) {
-    return "An account with that email already exists.";
-  }
-  if (message.includes("rate limit") || message.includes("too many")) {
-    return "Too many attempts. Wait a minute and try again.";
-  }
-  if (message.includes("password should be at least")) {
-    return "Password must be at least 6 characters.";
-  }
-  return "Something went wrong. Please try again.";
 }
 
 function parseOrState<T extends z.ZodType>(

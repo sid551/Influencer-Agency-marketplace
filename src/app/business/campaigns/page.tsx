@@ -9,6 +9,7 @@ import {
   listBusinessCampaigns,
 } from "@/services/business-campaign.service";
 import { getOwnBusinessProfile } from "@/services/business-profile.service";
+import { label } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,15 +63,24 @@ async function CampaignsLoader() {
           <CardTitle>All campaigns</CardTitle>
           <CardDescription>
             {campaigns.length === 0
-              ? "You haven't published any campaigns yet."
+              ? "No campaigns yet. Create one to start receiving applications."
               : `${campaigns.length} campaign${campaigns.length === 1 ? "" : "s"} total.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {campaigns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Use “New campaign” to create your first opportunity for creators.
-            </p>
+            <div className="flex flex-col items-start gap-3 py-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+              <p className="max-w-md text-sm text-muted-foreground">
+                Write a short brief, choose your budget, and publish it when
+                you&apos;re ready for creators to apply.
+              </p>
+              <Button asChild>
+                <Link href="/business/campaigns/new">
+                  <PlusIcon className="size-4" />
+                  Create your first campaign
+                </Link>
+              </Button>
+            </div>
           ) : (
             <ul className="divide-y">
               {campaigns.map((campaign) => (
@@ -89,7 +99,7 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
     <li className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <Link
-          href={`/business/campaigns/${campaign.id}/applications`}
+          href={`/business/campaigns/${campaign.id}/edit`}
           className="font-medium hover:underline"
         >
           {campaign.title}
@@ -100,9 +110,7 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <Badge variant="outline" className="capitalize">
-          {campaign.status}
-        </Badge>
+        <Badge variant="outline">{label(campaign.status)}</Badge>
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/business/campaigns/${campaign.id}/applications`}>
             Applications

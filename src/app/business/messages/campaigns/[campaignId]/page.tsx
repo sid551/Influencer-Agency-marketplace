@@ -7,6 +7,7 @@ import { ArrowLeftIcon, MessageSquareIcon } from "lucide-react";
 import { requireBusiness } from "@/lib/auth/session";
 import { applicationStatusVariant, formatDate } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
+import { applicationStatusLabel } from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
   getBusinessCampaign,
@@ -88,10 +89,10 @@ function parseStatus(value: string | undefined): ApplicationStatus | "all" {
 }
 
 const FILTERS: Array<{ value: ApplicationStatus | "all"; label: string }> = [
-  { value: "accepted", label: "Accepted" },
-  { value: "finalized", label: "Finalized" },
+  { value: "accepted", label: "In negotiation" },
+  { value: "finalized", label: "Selected" },
   { value: "all", label: "All applicants" },
-  { value: "pending", label: "Pending" },
+  { value: "pending", label: "Pending review" },
 ];
 
 function CampaignMessagesView({
@@ -141,10 +142,21 @@ function CampaignMessagesView({
 
       {applicants.length === 0 ? (
         <Card className="mt-6">
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            {status === "accepted"
-              ? "No creators are in negotiation for this campaign yet."
-              : "No applicants with this status."}
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center text-sm text-muted-foreground">
+            <p>
+              {status === "accepted"
+                ? "No creators are in negotiation for this campaign yet."
+                : status === "pending"
+                  ? "No applications are waiting for review."
+                  : "No applicants with this status."}
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={`/business/campaigns/${campaignId}/applications`}
+              >
+                Review applications
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -165,9 +177,9 @@ function CampaignMessagesView({
                       <p className="text-sm font-medium">{creatorName}</p>
                       <Badge
                         variant={applicationStatusVariant(applicant.applicationStatus)}
-                        className="text-xs capitalize"
+                        className="text-xs"
                       >
-                        {applicant.applicationStatus}
+                        {applicationStatusLabel(applicant.applicationStatus)}
                       </Badge>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -204,7 +216,15 @@ function CampaignMessagesView({
                           Message creator
                         </Button>
                       </form>
-                    ) : null}
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <Link
+                          href={`/business/applications/${applicant.applicationId}`}
+                        >
+                          Review application
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

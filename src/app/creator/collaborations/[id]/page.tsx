@@ -6,6 +6,7 @@ import { ArrowLeftIcon, CalendarDaysIcon, MessageSquareIcon } from "lucide-react
 
 import { requireCreator } from "@/lib/auth/session";
 import { formatMoney } from "@/lib/money";
+import { COLLABORATION_STATUS_HELP, label } from "@/lib/labels";
 import { getCollaborationForCreator } from "@/services/collaboration.service";
 import type {
   CollaborationDetail,
@@ -168,7 +169,7 @@ function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
             <CardHeader>
               <CardTitle>Next steps</CardTitle>
               <CardDescription>
-                Only transitions allowed for creators are shown.
+                {COLLABORATION_STATUS_HELP[collaboration.status]}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -234,7 +235,7 @@ function DeliverableRow({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{deliverable.title}</p>
         <Badge variant={deliverable.status === "approved" ? "default" : "outline"} className="text-xs">
-          {deliverable.status}
+          {label(deliverable.status)}
         </Badge>
       </div>
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

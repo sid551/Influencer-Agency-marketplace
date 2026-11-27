@@ -9,6 +9,7 @@ import {
   addSocialAccount,
   removeSocialAccount,
 } from "@/app/creator/onboarding/actions";
+import { InstagramConnectCard } from "@/components/creator/instagram-connect-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { verificationStatusLabel } from "@/lib/labels";
+import type { InstagramNotice } from "@/lib/instagram-oauth";
 import { socialAccountSchema } from "@/lib/validations/onboarding";
 import { SOCIAL_PLATFORMS } from "@/types/creator.types";
 import type { SocialAccount } from "@/types/creator.types";
@@ -48,19 +51,30 @@ const PLATFORM_LABELS: Record<string, string> = {
 interface SocialAccountsStepProps {
   accounts: SocialAccount[];
   onChange: (accounts: SocialAccount[]) => void;
+  instagramNotice?: InstagramNotice | null;
+  instagramConfigured?: boolean;
 }
 
 /**
- * Onboarding step 9. Accounts are saved through their own actions so
- * the list updates immediately; the wizard marks the step complete
- * when the user presses Next. Every account starts as "unverified".
+ * Onboarding step 9. Instagram can be verified through OAuth; other
+ * accounts are self-reported through their own actions so the list updates
+ * immediately. The wizard marks the step complete when the user presses
+ * Next, and every manually added account starts as "unverified".
  */
 export function SocialAccountsStep({
   accounts,
   onChange,
+  instagramNotice,
+  instagramConfigured = true,
 }: SocialAccountsStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const instagramAccount = accounts.find(
+    (account) =>
+      account.platform === "instagram" &&
+      account.verification_status === "verified" &&
+      account.verification_method === "oauth",
+  );
 
   const form = useForm<AddValues>({
     resolver: zodResolver(socialAccountSchema),
@@ -110,12 +124,19 @@ export function SocialAccountsStep({
       <div>
         <h2 className="text-base font-medium">Your social accounts</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Link the accounts you create on. They stay marked{" "}
-          <span className="font-medium text-foreground">unverified</span>{" "}
-          until a manual review confirms ownership — we never claim
-          verification we haven&apos;t done.
+          Connect Instagram to get paid deals, or add other accounts you
+          create on. Self-reported accounts stay{" "}
+          <span className="font-medium text-foreground">not verified</span>{" "}
+          until we confirm ownership. This step is optional.
         </p>
       </div>
+
+      <InstagramConnectCard
+        account={instagramAccount}
+        returnTo="/creator/onboarding"
+        notice={instagramNotice}
+        configured={instagramConfigured}
+      />
 
       {error ? (
         <Alert variant="destructive">
@@ -141,7 +162,7 @@ export function SocialAccountsStep({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Badge variant="outline" className="text-xs">
-                  {account.verification_status}
+                  {verificationStatusLabel(account.verification_status)}
                 </Badge>
                 <Button
                   type="button"
@@ -159,8 +180,8 @@ export function SocialAccountsStep({
         </ul>
       ) : (
         <p className="rounded-2xl border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
-          No accounts linked yet — add at least one below (you can skip
-          this step too).
+          No accounts linked yet. Add one below, or skip this step and come
+          back later.
         </p>
       )}
 

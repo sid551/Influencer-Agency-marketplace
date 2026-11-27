@@ -1,6 +1,7 @@
 "use server";
 
 import { requireCreator } from "@/lib/auth/session";
+import { disconnectOwnInstagramAccount } from "@/services/instagram-oauth.service";
 import {
   addOwnSocialAccount,
   removeOwnSocialAccount,
@@ -54,6 +55,15 @@ export async function addSocialAccountAction(
   }
 
   return { ...EMPTY_STATE, ok: true, account: result.data };
+}
+
+/** Revoke Instagram access: deletes the encrypted token and account row. */
+export async function disconnectInstagramAction(): Promise<SocialAccountActionState> {
+  const { user } = await requireCreator();
+  const result = await disconnectOwnInstagramAccount(user.id);
+  return result.ok
+    ? { ...EMPTY_STATE, ok: true }
+    : { ...EMPTY_STATE, message: result.message };
 }
 
 export async function removeSocialAccountAction(

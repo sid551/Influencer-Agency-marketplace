@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon, Loader2Icon } from "lucide-react";
 
 import { login, type AuthFormState } from "@/app/(auth)/actions";
+import { authErrorMessage } from "@/lib/auth-error";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +59,7 @@ export function LoginForm() {
     }
   }, [state.fieldErrors, form]);
 
-  const formError = state.error ?? urlError;
+  const formError = state.error ?? (urlError ? authErrorMessage(urlError) : null);
 
   return (
     <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">

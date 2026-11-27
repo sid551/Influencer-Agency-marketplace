@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useActionState, useEffect, useRef, useTransition } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon } from "lucide-react";
 import * as z from "zod";
@@ -38,6 +38,7 @@ export function ApplyToCampaignForm({ campaignId }: { campaignId: string }) {
     { ok: false, message: null, fieldErrors: {} },
   );
   const [, startTransition] = useTransition();
+  const errorsApplied = useRef("");
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationFormSchema),
@@ -48,6 +49,24 @@ export function ApplyToCampaignForm({ campaignId }: { campaignId: string }) {
       currency: DEFAULT_CURRENCY,
     },
   });
+
+  // Show server-side validation failures beside the field that caused them.
+  useEffect(() => {
+    const key = JSON.stringify(state.fieldErrors);
+    if (key === errorsApplied.current) return;
+    errorsApplied.current = key;
+    for (const [name, messages] of Object.entries(state.fieldErrors)) {
+      if (messages?.[0]) {
+        form.setError(name as keyof ApplicationFormValues, {
+          type: "server",
+          message: messages[0],
+        });
+      }
+    }
+  }, [state.fieldErrors, form]);
+
+  const proposal = useWatch({ control: form.control, name: "proposal" });
+  const proposalLength = proposal?.length ?? 0;
 
   function onSubmit(values: ApplicationFormValues) {
     const formData = new FormData();
@@ -91,7 +110,8 @@ export function ApplyToCampaignForm({ campaignId }: { campaignId: string }) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Explain your idea, deliverables, and timeline (50+ chars).
+                    Explain your idea, deliverables, and timeline. Minimum 50
+                    characters — {proposalLength} written.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

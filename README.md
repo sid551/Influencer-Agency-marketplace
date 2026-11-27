@@ -71,6 +71,14 @@ for `npm run dev`. See [docs/brevo-email.md](docs/brevo-email.md) for the exact
 Brevo/Supabase settings, required secrets, and the `npm run configure:brevo`
 script.
 
+### Instagram connecting (optional)
+
+Creator onboarding can verify Instagram ownership through Meta's Business
+Login. Configure the Meta app, redirect URI, and encryption key described in
+[docs/instagram-connection.md](docs/instagram-connection.md). Without the
+credentials the Connect Instagram button is disabled and manual account entry
+still works.
+
 ### 4. Set up the database
 
 Migrations live in `supabase/migrations/` and are applied in filename order.
@@ -120,6 +128,7 @@ Open http://localhost:3000.
 | `npm run start` | Serve the production build |
 | `npm run lint` | Run ESLint |
 | `npm run configure:brevo` | Configure hosted Supabase Auth SMTP using Brevo |
+| `node scripts/build-india-locations.mjs` | Regenerate the India state/city data behind the location dropdowns |
 | `npx tsc --noEmit` | Type-check without emitting files |
 
 ## Implemented in Phase 3

@@ -14,9 +14,15 @@ import {
 import { EMPTY_FORM_STATE } from "@/types/action-state.types";
 
 const DECISION_LABELS: Record<BusinessApplicationDecision, string> = {
-  accepted: "Accept",
-  finalized: "Finalize creator",
+  accepted: "Start negotiating",
+  finalized: "Select this creator",
   rejected: "Decline",
+};
+
+const CONFIRM_MESSAGES: Partial<Record<BusinessApplicationDecision, string>> = {
+  finalized:
+    "Select this creator? The other accepted creators will be declined automatically.",
+  rejected: "Decline this application? The creator will be notified.",
 };
 
 /** Only shows decisions allowed by the current application status. */
@@ -28,17 +34,32 @@ export function ApplicationReviewActions({
   status: ApplicationStatus;
 }) {
   const decisions = BUSINESS_APPLICATION_TRANSITIONS[status];
-  if (decisions.length === 0) return null;
+
+  if (decisions.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        This application is closed — no further action is needed.
+      </p>
+    );
+  }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {decisions.map((decision) => (
-        <ApplicationDecisionButton
-          key={decision}
-          applicationId={applicationId}
-          decision={decision}
-        />
-      ))}
+    <div className="grid gap-2">
+      <div className="flex flex-wrap gap-2">
+        {decisions.map((decision) => (
+          <ApplicationDecisionButton
+            key={decision}
+            applicationId={applicationId}
+            decision={decision}
+          />
+        ))}
+      </div>
+      {decisions.includes("finalized") ? (
+        <p className="text-xs text-muted-foreground">
+          Selecting a creator automatically declines other accepted creators.
+          Message them first if you still need to agree on terms.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -64,7 +85,13 @@ export function ApplicationDecisionButton({
   }, [state.message, state.ok]);
 
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      onSubmit={(event) => {
+        const message = CONFIRM_MESSAGES[decision];
+        if (message && !window.confirm(message)) event.preventDefault();
+      }}
+    >
       <Button
         type="submit"
         size={size}

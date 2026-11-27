@@ -9,6 +9,7 @@ import {
   applicationStatusVariant,
   formatPrice,
 } from "@/lib/business-format";
+import { applicationStatusLabel } from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
   listBusinessCampaignApplications,
@@ -143,8 +144,8 @@ async function CampaignApplicationsLoader({
                 >
                   <option value="">All statuses</option>
                   {APPLICATION_STATUSES.map((status) => (
-                    <option key={status} value={status} className="capitalize">
-                      {status}
+                    <option key={status} value={status}>
+                      {applicationStatusLabel(status)}
                     </option>
                   ))}
                 </select>
@@ -195,15 +196,19 @@ function ApplicationRow({ application }: { application: BusinessApplication }) {
           {creatorName}
         </Link>
         <p className="mt-1 text-xs text-muted-foreground">
+          {application.creator?.username ? `@${application.creator.username} · ` : ""}
           {formatPrice(application.expected_price, application.currency)} ·{" "}
           {new Date(application.created_at).toLocaleDateString()}
+        </p>
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {application.proposal}
         </p>
       </div>
       <Badge
         variant={applicationStatusVariant(application.status)}
-        className="w-fit capitalize"
+        className="w-fit"
       >
-        {application.status}
+        {applicationStatusLabel(application.status)}
       </Badge>
     </li>
   );

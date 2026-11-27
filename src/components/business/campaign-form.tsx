@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { CampaignFormDefaults } from "@/lib/campaign-form-defaults";
+import { label } from "@/lib/labels";
 import {
   CAMPAIGN_PLATFORMS,
 } from "@/lib/validations/business";
@@ -74,7 +75,7 @@ export function CampaignForm({
         <legend className="text-sm font-medium">Platforms</legend>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {CAMPAIGN_PLATFORMS.map((platform) => (
-            <label key={platform} className="flex items-center gap-2 text-sm capitalize">
+            <label key={platform} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 name="platforms"
@@ -82,7 +83,7 @@ export function CampaignForm({
                 defaultChecked={defaultValues.platforms.includes(platform)}
                 className="size-4 accent-primary"
               />
-              {platform === "x" ? "X" : platform}
+              {platform === "x" ? "X" : label(platform)}
             </label>
           ))}
         </div>
@@ -94,18 +95,25 @@ export function CampaignForm({
           <label htmlFor="collaboration_type" className="text-sm font-medium">Collaboration type</label>
           <select id="collaboration_type" name="collaboration_type" className={selectClass} defaultValue={defaultValues.collaboration_type}>
             {COLLABORATION_TYPES.map((type) => (
-              <option key={type} value={type}>{type.replace(/_/g, " ")}</option>
+              <option key={type} value={type}>{label(type)}</option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Pick the option that best matches how you want to work.
+          </p>
           <FieldError messages={state.fieldErrors.collaboration_type} />
         </div>
         <div className="grid gap-2">
           <label htmlFor="status" className="text-sm font-medium">Status</label>
           <select id="status" name="status" className={selectClass} defaultValue={defaultValues.status}>
             {(editing ? CAMPAIGN_STATUSES : (["draft", "published"] as const)).map((status) => (
-              <option key={status} value={status}>{status}</option>
+              <option key={status} value={status}>{label(status)}</option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground">
+            Draft: only you can see it. Open for applications: creators can
+            find and apply. You can publish later by editing the campaign.
+          </p>
           <FieldError messages={state.fieldErrors.status} />
         </div>
       </div>
@@ -127,9 +135,13 @@ export function CampaignForm({
           <FieldError messages={state.fieldErrors.currency} />
         </div>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Budget is optional — leave both amounts blank if you&apos;d rather agree
+        on price with creators. Currency is set to your account default.
+      </p>
 
       <div className="grid gap-2">
-        <label htmlFor="deliverables" className="text-sm font-medium">Deliverables</label>
+        <label htmlFor="deliverables" className="text-sm font-medium">Deliverables (in your brief)</label>
         <Textarea
           id="deliverables"
           name="deliverables"
@@ -137,7 +149,10 @@ export function CampaignForm({
           defaultValue={defaultValues.deliverables}
           placeholder={"1 short-form video\n1 Instagram story set"}
         />
-        <p className="text-xs text-muted-foreground">One deliverable per line.</p>
+        <p className="text-xs text-muted-foreground">
+          One deliverable per line. This is your wish list — you&apos;ll agree on
+          final deliverables with the creator you choose.
+        </p>
         <FieldError messages={state.fieldErrors.deliverables} />
       </div>
 

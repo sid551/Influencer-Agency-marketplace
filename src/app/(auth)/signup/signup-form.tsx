@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useActionState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircleIcon, Loader2Icon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  EyeIcon,
+  EyeOffIcon,
+  Loader2Icon,
+} from "lucide-react";
 
 import { signup, type AuthFormState } from "@/app/(auth)/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -48,13 +53,16 @@ const ROLE_OPTIONS = [
 export function SignupForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
+  const roleParam = searchParams.get("role");
+  const initialRole = roleParam === "business" ? "business" : "creator";
+  const [showPassword, setShowPassword] = useState(false);
 
   const [state, formAction, isPending] = useActionState(signup, initialState);
 
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      role: "creator",
+      role: initialRole,
       fullName: "",
       email: "",
       password: "",
@@ -76,13 +84,20 @@ export function SignupForm() {
     }
   }, [state.fieldErrors, form]);
 
+  // Keep the picker in sync with links like /signup?role=business.
+  useEffect(() => {
+    form.setValue("role", initialRole);
+  }, [form, initialRole]);
+
+  const selectedRole = useWatch({ control: form.control, name: "role" });
+
   return (
     <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_18px_45px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7">
       <h1 className="text-xl font-semibold tracking-tight">
         Create your account
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Join as a creator or a business.
+        Free to join. No card needed — choose how you&apos;ll use the platform below.
       </p>
 
       {state.error ? (
@@ -103,7 +118,7 @@ export function SignupForm() {
                 {/* Backs the button-based picker so the value is part
                     of the submitted FormData. */}
                 <input type="hidden" name={field.name} value={field.value} readOnly />
-                <FormLabel>I am a…</FormLabel>
+                <FormLabel>I&apos;m joining as…</FormLabel>
                 <div className="grid grid-cols-2 gap-3" role="radiogroup">
                   {ROLE_OPTIONS.map((option) => (
                     <button
@@ -179,7 +194,7 @@ export function SignupForm() {
                 <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     placeholder="At least 8 characters"
                     {...field}
@@ -188,10 +203,29 @@ export function SignupForm() {
                 <FormDescription>
                   At least 8 characters with a letter and a number.
                 </FormDescription>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="-mt-1 inline-flex items-center gap-1.5 self-start text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="size-3.5" aria-hidden="true" />
+                  ) : (
+                    <EyeIcon className="size-3.5" aria-hidden="true" />
+                  )}
+                  {showPassword ? "Hide password" : "Show password"}
+                </button>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <div className="rounded-xl bg-muted px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+            <span className="font-medium text-foreground">What happens next: </span>
+            {selectedRole === "business"
+              ? "a quick company setup, then create your first campaign."
+              : "a short guided profile setup, then browse open campaigns."}
+          </div>
 
           <Button type="submit" disabled={isPending} className="w-full">
             {isPending ? (

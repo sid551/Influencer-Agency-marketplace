@@ -60,10 +60,16 @@ const STATUS_LABELS: Record<CollaborationStatus, string> = {
   active: "Start collaboration",
   submitted: "Submit work",
   revision_requested: "Resubmit work",
-  approved: "Mark complete",
-  completed: "Completed",
+  approved: "Mark as complete",
+  completed: "Mark as complete",
   cancelled: "Cancel collaboration",
   disputed: "Report a dispute",
+};
+
+const CONFIRM_MESSAGES: Partial<Record<CollaborationStatus, string>> = {
+  negotiating: "Go back to negotiating terms? The agreement will need to be sent again.",
+  completed: "Mark this collaboration as complete? Make sure all work has been delivered.",
+  disputed: "Report a dispute? The business will be notified and work will pause.",
 };
 
 /** Buttons for the status changes this creator may request. */
@@ -116,7 +122,13 @@ function StatusButton({
 
   const destructive = next === "cancelled" || next === "disputed";
   return (
-    <form action={formAction}>
+    <form
+      action={formAction}
+      onSubmit={(event) => {
+        const message = CONFIRM_MESSAGES[next];
+        if (message && !window.confirm(message)) event.preventDefault();
+      }}
+    >
       <Button
         type="submit"
         size="sm"

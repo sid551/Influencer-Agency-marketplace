@@ -4,6 +4,10 @@ import { ChevronRightIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
 import { formatMoney } from "@/lib/money";
+import {
+  APPLICATION_STATUS_HELP,
+  applicationStatusLabel,
+} from "@/lib/labels";
 import { listOwnApplications } from "@/services/campaign.service";
 import {
   Card,
@@ -49,7 +53,7 @@ function ApplicationsView({
             My applications
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track your campaign applications and their status.
+            Track your applications and see what to do next.
           </p>
         </div>
         <Link href="/creator/discover">
@@ -59,17 +63,36 @@ function ApplicationsView({
         </Link>
       </div>
 
+      <Card className="mt-6">
+        <CardContent className="grid gap-2 py-4 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
+          <p className="font-medium text-foreground sm:col-span-full">
+            What the statuses mean
+          </p>
+          {Object.entries(APPLICATION_STATUS_HELP).map(([status, help]) => (
+            <p key={status}>
+              <span className="font-medium text-foreground">
+                {applicationStatusLabel(status as keyof typeof APPLICATION_STATUS_HELP)}:
+              </span>{" "}
+              {help}
+            </p>
+          ))}
+        </CardContent>
+      </Card>
+
       {applications.length === 0 ? (
-        <Card>
+        <Card className="mt-6">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-muted-foreground">
               You haven&apos;t applied to any campaigns yet. Start browsing to
               find collaborations that fit you.
             </p>
+            <Link href="/creator/discover">
+              <Button className="mt-5">Browse campaigns</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
-        <div className="mt-8 grid gap-4">
+        <div className="mt-6 grid gap-4">
           {applications.map((app) => (
             <ApplicationCard key={app.id} app={app} />
           ))}
@@ -84,18 +107,16 @@ function ApplicationCard({
 }: {
   app: Awaited<ReturnType<typeof listOwnApplications>>[number];
 }) {
-  const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    pending: { variant: "outline", label: "Pending" },
-    accepted: { variant: "default", label: "Negotiating" },
-    finalized: { variant: "default", label: "Selected" },
-    rejected: { variant: "destructive", label: "Rejected" },
-    withdrawn: { variant: "secondary", label: "Withdrawn" },
+  const statusConfig: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    pending: "outline",
+    accepted: "default",
+    finalized: "default",
+    rejected: "destructive",
+    withdrawn: "secondary",
   };
 
-  const config = statusConfig[app.status] ?? {
-    variant: "secondary",
-    label: app.status,
-  };
+  const badgeVariant = statusConfig[app.status] ?? "secondary";
+  const inConversation = app.status === "accepted" || app.status === "finalized";
 
   return (
     <Card className="overflow-hidden">
@@ -108,9 +129,12 @@ function ApplicationCard({
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">
+              <Link
+                href={`/creator/campaigns/${app.campaign_id}`}
+                className="block truncate text-sm font-medium hover:underline"
+              >
                 {app.campaign?.title ?? "Campaign"}
-              </p>
+              </Link>
               <p className="text-xs text-muted-foreground truncate">
                 {app.campaign?.category ?? ""}
                 {app.campaign?.application_deadline && (
@@ -119,8 +143,8 @@ function ApplicationCard({
               </p>
             </div>
           </div>
-          <Badge variant={config.variant} className="text-xs">
-            {config.label}
+          <Badge variant={badgeVariant} className="text-xs">
+            {applicationStatusLabel(app.status)}
           </Badge>
         </div>
       </CardContent>
@@ -128,8 +152,18 @@ function ApplicationCard({
         <span className="text-muted-foreground">
           {app.proposal.slice(0, 100)}{app.proposal.length > 100 ? "…" : ""}
         </span>
-        <span className="text-muted-foreground">
-          {formatMoney(app.expected_price, app.currency)}
+        <span className="flex items-center gap-3">
+          <span className="text-muted-foreground">
+            {formatMoney(app.expected_price, app.currency)}
+          </span>
+          {inConversation ? (
+            <Link
+              href="/creator/messages"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Open messages →
+            </Link>
+          ) : null}
         </span>
       </CardFooter>
     </Card>

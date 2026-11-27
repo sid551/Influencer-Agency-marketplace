@@ -1,14 +1,18 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon, Loader2Icon } from "lucide-react";
+import { toast } from "sonner";
+import { PlusIcon, Trash2Icon, Loader2Icon, UnplugIcon } from "lucide-react";
 
 import {
   addSocialAccountAction,
+  disconnectInstagramAction,
   removeSocialAccountAction,
 } from "./actions";
+import { verificationStatusLabel } from "@/lib/labels";
 import { socialAccountSchema } from "@/lib/validations/onboarding";
 import { SOCIAL_PLATFORMS } from "@/types/creator.types";
 import type { SocialAccount } from "@/types/creator.types";
@@ -63,7 +67,7 @@ export function SocialAccountsList({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="outline" className="text-xs">
-              {account.verification_status}
+              {verificationStatusLabel(account.verification_status)}
             </Badge>
             <DeleteSocialAccountForm accountId={account.id} />
           </div>
@@ -78,16 +82,26 @@ function DeleteSocialAccountForm({
 }: {
   accountId: string;
 }) {
+  const router = useRouter();
   const [state, deleteAction, isPending] = useActionState(
     removeSocialAccountAction,
     { ok: false, message: null, fieldErrors: {} },
   );
+  const handled = useRef(false);
 
-  if (state.ok) {
-    // Item deleted — parent will re-fetch on navigation
-  }
+  useEffect(() => {
+    if (handled.current || (!state.ok && !state.message)) return;
+    handled.current = true;
+    if (state.ok) {
+      toast.success("Account removed");
+      router.refresh();
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state.ok, state.message, router]);
 
   function handleRemove() {
+    if (!window.confirm("Remove this social account from your profile?")) return;
     const formData = new FormData();
     formData.append("accountId", accountId);
     deleteAction(formData);
@@ -100,7 +114,7 @@ function DeleteSocialAccountForm({
       size="sm"
       onClick={handleRemove}
       disabled={isPending}
-      aria-label={`Remove ${accountId}`}
+      aria-label="Remove social account"
     >
       {isPending ? (
         <Loader2Icon className="animate-spin size-4" />
@@ -111,12 +125,56 @@ function DeleteSocialAccountForm({
   );
 }
 
+export function InstagramDisconnectButton() {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function handleDisconnect() {
+    if (
+      !window.confirm(
+        "Disconnect Instagram? This removes the verified account and its access token.",
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      const state = await disconnectInstagramAction();
+      if (state.ok) {
+        toast.success("Instagram disconnected");
+        router.refresh();
+      } else {
+        toast.error(state.message ?? "Could not disconnect Instagram.");
+      }
+    });
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={handleDisconnect}
+      disabled={isPending}
+    >
+      {isPending ? (
+        <Loader2Icon className="animate-spin" />
+      ) : (
+        <UnplugIcon />
+      )}
+      Disconnect
+    </Button>
+  );
+}
+
 export function AddSocialAccountForm() {
-  const [, addAction, isPending] = useActionState(
+  const router = useRouter();
+  const [state, addAction, isPending] = useActionState(
     addSocialAccountAction,
     { ok: false, message: null, fieldErrors: {} },
   );
   const [isSubmitting, startTransition] = useTransition();
+  const handled = useRef("");
+  const errorsApplied = useRef("");
 
   const form = useForm<{
     platform: string;
@@ -125,6 +183,33 @@ export function AddSocialAccountForm() {
     resolver: zodResolver(socialAccountSchema),
     defaultValues: { platform: "instagram", username: "" },
   });
+
+  useEffect(() => {
+    const key = JSON.stringify(state.fieldErrors);
+    if (key === errorsApplied.current) return;
+    errorsApplied.current = key;
+    for (const [name, messages] of Object.entries(state.fieldErrors)) {
+      if (messages?.[0]) {
+        form.setError(name as "platform" | "username", {
+          type: "server",
+          message: messages[0],
+        });
+      }
+    }
+  }, [state.fieldErrors, form]);
+
+  useEffect(() => {
+    const key = `${state.ok}:${state.message ?? ""}`;
+    if (key === handled.current || (!state.ok && !state.message)) return;
+    handled.current = key;
+    if (state.ok) {
+      toast.success("Account added");
+      form.reset({ platform: "instagram", username: "" });
+      router.refresh();
+    } else if (state.message) {
+      toast.error(state.message);
+    }
+  }, [state.ok, state.message, form, router]);
 
   function onSubmit(values: { platform: string; username: string }) {
     const formData = new FormData();

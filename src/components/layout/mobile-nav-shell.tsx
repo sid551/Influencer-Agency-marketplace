@@ -25,6 +25,19 @@ export function MobileNavShell({
   const [open, setOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
+
+  // Return focus to the trigger when the drawer closes (Escape, overlay or
+  // navigation), so keyboard users don't land back on a background element.
+  useEffect(() => {
+    if (open) {
+      wasOpen.current = true;
+      return;
+    }
+    if (!wasOpen.current) return;
+    wasOpen.current = false;
+    menuButtonRef.current?.focus();
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

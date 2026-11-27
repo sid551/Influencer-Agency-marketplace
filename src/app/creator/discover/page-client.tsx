@@ -11,6 +11,7 @@ import {
 import { useMemo, useState } from "react";
 
 import type { Campaign } from "@/types/campaign.types";
+import { label } from "@/lib/labels";
 import { formatMoneyRange } from "@/lib/money";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,8 +123,8 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
             onValueChange={(v) => setStatusFilter(v as "all" | "published" | "active")}
             options={[
               { value: "all", label: "All" },
-              { value: "published", label: "Published" },
-              { value: "active", label: "Active" },
+              { value: "published", label: "Open for applications" },
+              { value: "active", label: "In progress" },
             ]}
           />
           <FilterSelect
@@ -132,7 +133,7 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
             onValueChange={setTypeFilter}
             options={[
               { value: "all", label: "All" },
-              ...CAMPAIGN_TYPES.map((t) => ({ value: t, label: t.replace(/_/g, " ") })),
+              ...CAMPAIGN_TYPES.map((t) => ({ value: t, label: label(t) })),
             ]}
           />
           <FilterSelect
@@ -145,6 +146,11 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
             ]}
           />
         </div>
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          “Open for applications” means you can still apply. “In progress”
+          means a creator has already been chosen.
+        </p>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
           <p className="text-xs tabular-nums text-muted-foreground">
@@ -168,9 +174,15 @@ export function CampaignDiscovery({ campaigns }: { campaigns: Campaign[] }) {
           <div className="grid size-12 place-items-center rounded-2xl border border-border bg-card">
             <SearchIcon className="size-5 text-muted-foreground" />
           </div>
-          <p className="mt-4 text-sm font-medium">No campaigns match your filters</p>
+          <p className="mt-4 text-sm font-medium">
+            {campaigns.length === 0
+              ? "No open briefs right now"
+              : "No campaigns match your filters"}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Try broadening your search.
+            {campaigns.length === 0
+              ? "Check back soon — new campaigns are added all the time."
+              : "Try broadening your search."}
           </p>
           {activeFilterCount > 0 && (
             <button
@@ -255,7 +267,12 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
       : "Budget on request";
 
   return (
-    <Card className="group flex h-full flex-col gap-0 overflow-hidden py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/40 hover:shadow-[0_22px_50px_color-mix(in_srgb,var(--foreground)_9%,transparent)]">
+    <Link
+      href={`/creator/campaigns/${campaign.id}`}
+      className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      aria-label={`View details for ${campaign.title}`}
+    >
+    <Card className="flex h-full flex-col gap-0 overflow-hidden py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/40 hover:shadow-[0_22px_50px_color-mix(in_srgb,var(--foreground)_9%,transparent)]">
       <CardContent className="relative p-0">
         <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-gradient-to-br from-foreground/10 via-muted to-background">
           <div
@@ -282,7 +299,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
               className="capitalize shadow-sm"
               variant={campaign.collaboration_type === "paid" ? "default" : "outline"}
             >
-              {campaign.collaboration_type.replace(/_/g, " ")}
+              {label(campaign.collaboration_type)}
             </Badge>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/90 px-2 py-1 text-[10px] font-medium capitalize text-muted-foreground backdrop-blur">
               <span
@@ -292,7 +309,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
                     : "size-1.5 rounded-full border border-foreground"
                 }
               />
-              {campaign.status}
+              {label(campaign.status)}
             </span>
           </div>
 
@@ -334,19 +351,17 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
         <div className="flex w-full items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Budget (INR)
+              Budget ({campaign.currency})
             </p>
             <p className="truncate text-sm font-medium tabular-nums">{budget}</p>
           </div>
-          <Link
-            href={`/creator/campaigns/${campaign.id}`}
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-medium"
-          >
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium">
             View details
             <ChevronRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </span>
         </div>
       </CardFooter>
     </Card>
+    </Link>
   );
 }

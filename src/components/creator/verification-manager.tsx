@@ -14,6 +14,7 @@ import {
   REQUESTABLE_VERIFICATION_TYPES,
   VERIFICATION_EVIDENCE_MAX_BYTES,
 } from "@/lib/validations/verification";
+import { label, verificationStatusLabel } from "@/lib/labels";
 import type {
   SocialAccount,
   VerificationStatus,
@@ -52,12 +53,6 @@ const PLATFORM_LABELS: Record<string, string> = {
   instagram: "Instagram",
   youtube: "YouTube",
 };
-
-function titleCase(value: string) {
-  return value
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
 
 function statusVariant(status: VerificationStatus) {
   if (status === "verified") return "default" as const;
@@ -168,7 +163,7 @@ function RequestCard({ accounts }: { accounts: SocialAccount[] }) {
                     <SelectItem key={account.id} value={account.id}>
                       @{account.username}
                       {account.verification_status !== "unverified"
-                        ? ` (${titleCase(account.verification_status)})`
+                        ? ` (${verificationStatusLabel(account.verification_status)})`
                         : ""}
                     </SelectItem>
                   ))}
@@ -217,6 +212,11 @@ function RequestCard({ accounts }: { accounts: SocialAccount[] }) {
             </div>
           ) : null}
 
+          <p className="text-xs text-muted-foreground">
+            Reviews are manual. We&apos;ll notify you when there&apos;s a
+            decision — you can check progress in “Your requests” below.
+          </p>
+
           <div className="flex justify-end">
             <Button type="submit" disabled={isPending}>
               {isPending ? (
@@ -253,10 +253,10 @@ function ClaimsCard({ claims }: { claims: VerificationWithSocial[] }) {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-medium">
-                        {TYPE_LABELS[claim.type] ?? titleCase(claim.type)}
+                        {TYPE_LABELS[claim.type] ?? label(claim.type)}
                       </p>
                       <Badge variant={statusVariant(claim.status)}>
-                        {titleCase(claim.status)}
+                        {verificationStatusLabel(claim.status)}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">

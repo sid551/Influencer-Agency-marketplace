@@ -10,6 +10,10 @@ import {
   formatDate,
   formatPrice,
 } from "@/lib/business-format";
+import {
+  COLLABORATION_STATUS_HELP,
+  label,
+} from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import { getBusinessCollaboration } from "@/services/business-collaboration.service";
 import {
@@ -94,7 +98,7 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
                   variant={collaborationStatusVariant(collaboration.status)}
                   className="capitalize"
                 >
-                  {collaboration.status.replace(/_/g, " ")}
+                  {label(collaboration.status)}
                 </Badge>
               </div>
               <CardDescription>with {creatorName}</CardDescription>
@@ -185,7 +189,7 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
             <CardHeader>
               <CardTitle>Next steps</CardTitle>
               <CardDescription>
-                Only transitions allowed for businesses are shown.
+                {COLLABORATION_STATUS_HELP[collaboration.status]}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -275,7 +279,7 @@ function DeliverableRow({
           variant={deliverable.status === "approved" ? "default" : "outline"}
           className="text-xs capitalize"
         >
-          {deliverable.status}
+          {label(deliverable.status)}
         </Badge>
       </div>
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

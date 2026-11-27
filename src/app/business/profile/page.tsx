@@ -35,7 +35,7 @@ async function ProfileLoader() {
   await connection();
   const { user } = await requireBusiness();
   const profile = await getOwnBusinessProfile(user.id);
-  if (!profile) redirect("/business/onboarding");
+  if (!profile?.onboarding_completed) redirect("/business/onboarding");
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10">

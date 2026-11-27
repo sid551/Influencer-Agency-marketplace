@@ -1,6 +1,8 @@
 "use client";
 
 import type { UseFormReturn, FieldPath } from "react-hook-form";
+import { useWatch } from "react-hook-form";
+import { useMemo } from "react";
 
 import {
   FormControl,
@@ -11,6 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,7 +22,9 @@ import {
   NICHE_OPTIONS,
   COLLABORATION_PREFERENCES,
 } from "@/types/creator.types";
+import { citiesForState, INDIAN_STATES } from "@/lib/locations";
 import { cn } from "cn";
+import { label as labelFor } from "@/lib/labels";
 import type { OnboardingValues } from "@/lib/validations/onboarding";
 
 type WizardForm = UseFormReturn<OnboardingValues>;
@@ -29,6 +34,10 @@ type WizardForm = UseFormReturn<OnboardingValues>;
  * accounts) and step 12 (review) live in their own components.
  */
 export function StepFields({ step, form }: { step: number; form: WizardForm }) {
+  // Drives the location step: the city list follows the chosen state.
+  const selectedState = useWatch({ control: form.control, name: "state" });
+  const cityOptions = useMemo(() => citiesForState(selectedState), [selectedState]);
+
   switch (step) {
     case 1:
       return (
@@ -109,30 +118,64 @@ export function StepFields({ step, form }: { step: number; form: WizardForm }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
-            name="city"
+            name="state"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>City</FormLabel>
+                <FormLabel>State</FormLabel>
                 <FormControl>
-                  <Input autoComplete="address-level2" placeholder="Mumbai" {...field} />
+                  <Combobox
+                    value={field.value ?? ""}
+                    onChange={(next) => {
+                      field.onChange(next);
+                      // A city from the old state no longer applies —
+                      // clear it so the pair always stays consistent.
+                      const currentCity = form.getValues("city");
+                      if (
+                        currentCity &&
+                        !citiesForState(next).includes(currentCity)
+                      ) {
+                        form.setValue("city", "", { shouldDirty: true });
+                      }
+                    }}
+                    options={INDIAN_STATES}
+                    allowCustomValue
+                    placeholder="Search your state…"
+                    searchPlaceholder="Search states"
+                    emptyMessage="No state matches that."
+                  />
                 </FormControl>
+                <FormDescription>
+                  Start typing to filter — every state and union territory.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="state"
+            name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>State / region</FormLabel>
+                <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input
-                    autoComplete="address-level1"
-                    placeholder="Maharashtra"
-                    {...field}
+                  <Combobox
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    options={cityOptions}
+                    allowCustomValue
+                    disabled={!selectedState}
+                    placeholder={
+                      selectedState ? "Search your city…" : "Pick a state first"
+                    }
+                    searchPlaceholder="Search cities"
+                    emptyMessage="No city matches — type it below."
                   />
                 </FormControl>
+                <FormDescription>
+                  {selectedState
+                    ? `Cities in ${selectedState}. Don't see yours? Type it.`
+                    : "Choose your state first — the city list follows it."}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -334,15 +377,16 @@ function MultiCheckboxField({
                       }
                     }}
                   />
-                  <span className="capitalize leading-tight">
-                    {option.replace(/_/g, " ")}
-                  </span>
+                  <span className="leading-tight">{labelFor(option)}</span>
                 </label>
               );
             })}
           </div>
           <p className="text-xs text-muted-foreground">
             {field.value.length}/{max} selected
+            {field.value.length >= max
+              ? " — unselect one to choose a different option"
+              : ""}
           </p>
           <FormMessage />
         </FormItem>
