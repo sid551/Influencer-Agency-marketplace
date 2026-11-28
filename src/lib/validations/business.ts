@@ -1,5 +1,6 @@
 import * as z from "zod";
 
+import { CAMPAIGN_IMAGE_ALT_MAX } from "@/lib/validations/campaign-image";
 import { currencySchema } from "@/lib/validations/currency";
 import { uuidSchema } from "@/lib/validations/ids";
 import { optionalHttpUrlSchema } from "@/lib/validations/url";
@@ -107,6 +108,7 @@ const campaignBaseSchema = z.object({
     }),
   application_deadline: optionalDateSchema,
   location: optionalText(120, "Location"),
+  image_alt: optionalText(CAMPAIGN_IMAGE_ALT_MAX, "Image description"),
 });
 
 /** RLS only permits new campaigns in draft or published status. */

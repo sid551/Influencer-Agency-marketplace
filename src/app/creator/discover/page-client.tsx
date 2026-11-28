@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRightIcon, ChevronLeftIcon, ChevronRightIcon, SparklesIcon } from "lucide-react";
 
@@ -174,24 +175,36 @@ export function CampaignCard({
       <Card className="flex h-full flex-col gap-0 overflow-hidden py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/40 hover:shadow-[0_22px_50px_color-mix(in_srgb,var(--foreground)_9%,transparent)]">
         <CardContent className="relative p-0">
           <div className="relative aspect-[16/10] overflow-hidden border-b border-border bg-gradient-to-br from-foreground/10 via-muted to-background">
-            <div
-              aria-hidden
-              className={`absolute -top-12 size-40 rounded-full border border-foreground/10 ${motifOffset}`}
-            />
-            <div
-              aria-hidden
-              className="absolute -bottom-16 right-0 size-48 rounded-full border border-foreground/10"
-            />
-            <div
-              aria-hidden
-              className="absolute inset-y-8 right-10 w-px rotate-12 bg-foreground/10"
-            />
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -bottom-4 right-3 select-none text-[5.5rem] font-black leading-none tracking-[-0.09em] text-foreground/10"
-            >
-              {initials}
-            </span>
+            {campaign.image_url ? (
+              <Image
+                src={campaign.image_url}
+                alt={campaign.image_alt || `${campaign.title} campaign photo`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
+            ) : (
+              <>
+                <div
+                  aria-hidden
+                  className={`absolute -top-12 size-40 rounded-full border border-foreground/10 ${motifOffset}`}
+                />
+                <div
+                  aria-hidden
+                  className="absolute -bottom-16 right-0 size-48 rounded-full border border-foreground/10"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-y-8 right-10 w-px rotate-12 bg-foreground/10"
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-4 right-3 select-none text-[5.5rem] font-black leading-none tracking-[-0.09em] text-foreground/10"
+                >
+                  {initials}
+                </span>
+              </>
+            )}
 
             <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-2">
               <Badge

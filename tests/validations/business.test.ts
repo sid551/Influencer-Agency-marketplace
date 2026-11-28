@@ -23,6 +23,7 @@ const validCampaign = {
   deliverables: "1 reel\n2 stories",
   application_deadline: "2026-12-31",
   location: "",
+  image_alt: "",
   status: "published",
 };
 
@@ -130,6 +131,22 @@ describe("campaignCreateSchema", () => {
       budget_max: "100",
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("normalises and limits the image description", () => {
+    const parsed = campaignCreateSchema.safeParse({
+      ...validCampaign,
+      image_alt: "  Product shoot  ",
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.image_alt).toBe("Product shoot");
+
+    expect(
+      campaignCreateSchema.safeParse({
+        ...validCampaign,
+        image_alt: "x".repeat(151),
+      }).success,
+    ).toBe(false);
   });
 });
 

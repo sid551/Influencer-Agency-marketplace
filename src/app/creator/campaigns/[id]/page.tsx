@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -83,9 +84,19 @@ function CampaignView({
         <div className="lg:col-span-8 space-y-6">
           <Card>
             <CardContent className="p-0 relative aspect-[4/3] overflow-hidden bg-muted">
-              <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
-                Campaign media
-              </div>
+              {campaign.image_url ? (
+                <Image
+                  src={campaign.image_url}
+                  alt={campaign.image_alt || `${campaign.title} campaign photo`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground text-sm">
+                  Campaign media
+                </div>
+              )}
               <Badge
                 className="absolute top-3 left-3 z-10"
                 variant={

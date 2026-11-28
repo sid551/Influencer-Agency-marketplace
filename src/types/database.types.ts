@@ -179,6 +179,9 @@ export type Database = {
           deliverables: string[];
           description: string;
           id: string;
+          image_alt: string | null;
+          image_public_id: string | null;
+          image_url: string | null;
           location: string | null;
           platforms: string[];
           status: string;
@@ -198,6 +201,9 @@ export type Database = {
           deliverables?: string[];
           description: string;
           id?: string;
+          image_alt?: string | null;
+          image_public_id?: string | null;
+          image_url?: string | null;
           location?: string | null;
           platforms?: string[];
           status?: string;
@@ -216,6 +222,9 @@ export type Database = {
           deliverables?: string[];
           description?: string;
           id?: string;
+          image_alt?: string | null;
+          image_public_id?: string | null;
+          image_url?: string | null;
           location?: string | null;
           platforms?: string[];
           status?: string;
@@ -1002,6 +1011,9 @@ export type Database = {
           deliverables: string[];
           description: string;
           id: string;
+          image_alt: string | null;
+          image_public_id: string | null;
+          image_url: string | null;
           location: string | null;
           match_score: number;
           match_section: string;

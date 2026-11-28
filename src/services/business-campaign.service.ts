@@ -5,6 +5,13 @@ import type { CampaignValues } from "@/lib/validations/business";
 import type { Campaign } from "@/types/campaign.types";
 import type { ServiceResult } from "./profile.service";
 
+/** Cloudinary references written alongside a campaign (one photo for now). */
+export interface CampaignImageFields {
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string | null;
+}
+
 /** Campaigns owned by the signed-in business, newest first. */
 export async function listBusinessCampaigns(
   userId: string,
@@ -96,6 +103,7 @@ export async function countBusinessApplications(userId: string): Promise<number>
 export async function createBusinessCampaign(
   userId: string,
   values: CampaignValues,
+  image: CampaignImageFields,
 ): Promise<ServiceResult<Campaign>> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -113,6 +121,9 @@ export async function createBusinessCampaign(
       deliverables: values.deliverables,
       application_deadline: values.application_deadline,
       location: values.location,
+      image_url: image.image_url,
+      image_public_id: image.image_public_id,
+      image_alt: image.image_alt,
       status: values.status,
     })
     .select("*")
@@ -143,6 +154,7 @@ export async function updateBusinessCampaign(
   userId: string,
   campaignId: string,
   values: CampaignValues,
+  image: CampaignImageFields,
 ): Promise<ServiceResult<Campaign>> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -159,6 +171,9 @@ export async function updateBusinessCampaign(
       deliverables: values.deliverables,
       application_deadline: values.application_deadline,
       location: values.location,
+      image_url: image.image_url,
+      image_public_id: image.image_public_id,
+      image_alt: image.image_alt,
       status: values.status,
     })
     .eq("id", campaignId)

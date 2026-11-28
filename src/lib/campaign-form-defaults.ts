@@ -16,6 +16,9 @@ export interface CampaignFormDefaults {
   deliverables: string;
   application_deadline: string;
   location: string;
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string;
   status: string;
 }
 
@@ -37,6 +40,9 @@ export function campaignFormDefaults(
     deliverables: campaign?.deliverables.join("\n") ?? "",
     application_deadline: campaign?.application_deadline?.slice(0, 10) ?? "",
     location: campaign?.location ?? "",
+    image_url: campaign?.image_url ?? null,
+    image_public_id: campaign?.image_public_id ?? null,
+    image_alt: campaign?.image_alt ?? "",
     status: campaign?.status ?? "draft",
   };
 }

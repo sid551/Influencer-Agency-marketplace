@@ -76,6 +76,10 @@ export interface Campaign {
   deliverables: string[];
   application_deadline: string | null;
   location: string | null;
+  /** Cloudinary asset reference; null when no photo was uploaded. */
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string | null;
   status: CampaignStatus;
   created_at: string;
   updated_at: string;

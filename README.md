@@ -43,8 +43,14 @@ cp .env.example .env.local
 | `SUPABASE_SECRET_KEY` | Supabase secret key (**server-only**) | privileged server operations |
 | `NEXT_PUBLIC_SITE_URL` | App base URL for auth redirects/emails | auth flows |
 | `DATABASE_URL` | Direct DB connection (migrations tooling only) | running migrations |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (**server-only**) | campaign photo uploads |
+| `CLOUDINARY_API_KEY` | Cloudinary API key (**server-only**) | campaign photo uploads |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret (**server-only**) | campaign photo uploads |
+| `CLOUDINARY_UPLOAD_FOLDER` | Optional Cloudinary folder (defaults to `campaign-images`) | campaign photo uploads |
 
-> Never prefix `SUPABASE_SECRET_KEY` or `DATABASE_URL` with `NEXT_PUBLIC_`.
+> Never prefix `SUPABASE_SECRET_KEY`, `DATABASE_URL`, or any `CLOUDINARY_*`
+> value with `NEXT_PUBLIC_`. Restart `npm run dev` after changing
+> `CLOUDINARY_CLOUD_NAME` so `next/image` allows the new URLs.
 
 ### 3. Configure Supabase Auth
 
@@ -78,6 +84,18 @@ Login. Configure the Meta app, redirect URI, and encryption key described in
 [docs/instagram-connection.md](docs/instagram-connection.md). Without the
 credentials the Connect Instagram button is disabled and manual account entry
 still works.
+
+### Campaign photos with Cloudinary (optional)
+
+Businesses can attach one JPEG, PNG or WebP photo to each campaign. The image
+bytes are uploaded from a Server Action using signed Cloudinary credentials;
+Supabase stores only `image_url`, `image_public_id` and `image_alt` on
+`public.campaigns`. Without the Cloudinary keys, the rest of the campaign form
+works and the photo field returns a configuration message.
+
+Apply `supabase/migrations/20261128000003_campaign_images.sql` when setting up
+a fresh database. It adds the columns and extends the recommendation RPC to
+return them.
 
 ### 4. Set up the database
 
@@ -383,6 +401,8 @@ the fixes with `supabase db push`:
   client-writable.
 - Server Actions validate bound row IDs, decisions and OTP types at runtime.
 - User-supplied URLs are restricted to HTTP(S) before rendering.
+- Campaign photos are uploaded from Server Actions with signed Cloudinary
+  credentials; only public URLs/public IDs are persisted in Supabase.
 
 `npm audit` currently reports zero vulnerabilities. Production error responses
 use generic messages; `error.digest` can be correlated with server logs.
@@ -399,6 +419,10 @@ use generic messages; `error.digest` can be correlated with server logs.
    - `NEXT_PUBLIC_SITE_URL` (the production origin, no trailing slash)
    - `SUPABASE_SECRET_KEY` only if an admin script needs it; the app runtime
      never uses a secret key.
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+     when campaign photo uploads are enabled.
+   - `CLOUDINARY_UPLOAD_FOLDER` if you want a folder other than
+     `campaign-images`.
 4. Apply every migration in `supabase/migrations/` to the production database
    (`supabase db push` or the Supabase SQL editor). Do not rely on `seed.sql`
    in production.

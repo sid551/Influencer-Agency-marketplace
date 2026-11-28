@@ -17,6 +17,9 @@ export interface RecommendedCampaign {
   deliverables: string[];
   application_deadline: string | null;
   location: string | null;
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string | null;
   status: string;
   created_at: string;
   updated_at: string;
