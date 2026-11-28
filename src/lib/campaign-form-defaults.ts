@@ -8,6 +8,7 @@ export interface CampaignFormDefaults {
   description: string;
   category: string;
   platforms: string[];
+  target_niches: string[];
   collaboration_type: string;
   budget_min: string;
   budget_max: string;
@@ -20,6 +21,7 @@ export interface CampaignFormDefaults {
 
 export function campaignFormDefaults(
   campaign?: Campaign | null,
+  targetNiches: string[] = [],
 ): CampaignFormDefaults {
   return {
     campaignId: campaign?.id ?? "",
@@ -27,6 +29,7 @@ export function campaignFormDefaults(
     description: campaign?.description ?? "",
     category: campaign?.category ?? "",
     platforms: campaign?.platforms ?? ["instagram"],
+    target_niches: targetNiches,
     collaboration_type: campaign?.collaboration_type ?? "paid",
     budget_min: campaign?.budget_min != null ? String(campaign.budget_min) : "",
     budget_max: campaign?.budget_max != null ? String(campaign.budget_max) : "",

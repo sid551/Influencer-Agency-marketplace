@@ -88,7 +88,8 @@ function buildInitialValues(
     city: profile.city ?? "",
     state: profile.state ?? "",
     bio: creatorProfile?.bio ?? "",
-    niches: creatorProfile?.niches ?? [],
+    niches: (creatorProfile?.niches ?? []) as OnboardingValues["niches"],
+    primaryNiche: (creatorProfile?.niches[0] ?? "") as OnboardingValues["primaryNiche"],
     languages: creatorProfile?.languages ?? [],
     contentTypes: creatorProfile?.content_types ?? [],
     collaborationPreferences:

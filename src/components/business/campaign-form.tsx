@@ -11,6 +11,7 @@ import { label } from "@/lib/labels";
 import {
   CAMPAIGN_PLATFORMS,
 } from "@/lib/validations/business";
+import { NICHE_OPTIONS } from "@/types/creator.types";
 import {
   CAMPAIGN_STATUSES,
   COLLABORATION_TYPES,
@@ -88,6 +89,29 @@ export function CampaignForm({
           ))}
         </div>
         <FieldError messages={state.fieldErrors.platforms} />
+      </fieldset>
+
+      <fieldset className="grid gap-2">
+        <legend className="text-sm font-medium">Target niches</legend>
+        <p className="text-xs text-muted-foreground">
+          Pick 1–5 niches this campaign is aimed at. Creators whose niches
+          match will see it higher in their discovery feed.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {NICHE_OPTIONS.map((niche) => (
+            <label key={niche} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="target_niches"
+                value={niche}
+                defaultChecked={defaultValues.target_niches?.includes(niche) ?? false}
+                className="size-4 accent-primary"
+              />
+              {label(niche)}
+            </label>
+          ))}
+        </div>
+        <FieldError messages={state.fieldErrors.target_niches} />
       </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">

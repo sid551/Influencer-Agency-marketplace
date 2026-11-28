@@ -121,10 +121,13 @@ describe("verification requests", () => {
 });
 
 describe("profile and portfolio input", () => {
+  const nicheFields = { niches: ["fashion"], primaryNiche: "fashion" };
+
   it("rejects attempts to smuggle role changes through profile updates", () => {
     const parsed = profileEditSchema.safeParse({
       fullName: "Mia Creator",
       username: "mia_123",
+      ...nicheFields,
       role: "admin",
     });
     expect(parsed.success).toBe(true);
@@ -132,7 +135,7 @@ describe("profile and portfolio input", () => {
   });
 
   it("accepts only HTTP(S) avatar URLs", () => {
-    const base = { fullName: "Mia Creator", username: "mia_123" };
+    const base = { fullName: "Mia Creator", username: "mia_123", ...nicheFields };
     expect(profileEditSchema.safeParse({ ...base, avatarUrl: "https://example.com/a.png" }).success).toBe(
       true,
     );

@@ -37,6 +37,43 @@ export async function getBusinessCampaign(
   return (data as Campaign | null) ?? null;
 }
 
+/** Target niche slugs for a campaign (ordered for stable form defaults). */
+export async function listCampaignNiches(campaignId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("campaign_niches")
+    .select("niche_slug")
+    .eq("campaign_id", campaignId)
+    .order("niche_slug");
+
+  if (error || !data) return [];
+  return (data as Array<{ niche_slug: string }>).map((row) => row.niche_slug);
+}
+
+/** Replace the campaign's target niche rows (owner-only via RLS). */
+async function syncCampaignNiches(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  campaignId: string,
+  niches: string[],
+): Promise<string | null> {
+  const { error: deleteError } = await supabase
+    .from("campaign_niches")
+    .delete()
+    .eq("campaign_id", campaignId);
+
+  if (deleteError) return "Could not update campaign niches. Please try again.";
+
+  if (niches.length === 0) return null;
+
+  const { error: insertError } = await supabase.from("campaign_niches").insert(
+    niches.map((niche_slug) => ({ campaign_id: campaignId, niche_slug })),
+  );
+
+  return insertError
+    ? "Could not save campaign niches. Please try again."
+    : null;
+}
+
 /** Total applications across every campaign owned by the business. */
 export async function countBusinessApplications(userId: string): Promise<number> {
   const campaigns = await listBusinessCampaigns(userId);
@@ -90,6 +127,14 @@ export async function createBusinessCampaign(
     }
     return { ok: false, message: "Could not create the campaign." };
   }
+
+  const nicheError = await syncCampaignNiches(
+    supabase,
+    (data as Campaign).id,
+    values.target_niches,
+  );
+  if (nicheError) return { ok: false, message: nicheError };
+
   return { ok: true, data: data as Campaign };
 }
 
@@ -124,5 +169,13 @@ export async function updateBusinessCampaign(
   if (error || !data) {
     return { ok: false, message: "Could not save the campaign." };
   }
+
+  const nicheError = await syncCampaignNiches(
+    supabase,
+    campaignId,
+    values.target_niches,
+  );
+  if (nicheError) return { ok: false, message: nicheError };
+
   return { ok: true, data: data as Campaign };
 }

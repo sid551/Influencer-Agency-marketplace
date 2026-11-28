@@ -73,7 +73,19 @@ export const onboardingStepSchemas = {
   3: z.object({ avatarUrl }),
   4: z.object({ city, state }),
   5: z.object({ bio }),
-  6: z.object({ niches: stringOptions(NICHE_OPTIONS, 1, 5, "niches") }),
+  // Step 6: one primary niche (also stored relationally) plus up to four
+  // secondary niches. The primary must be part of the selection.
+  6: z
+    .object({
+      niches: stringOptions(NICHE_OPTIONS, 1, 5, "niches"),
+      primaryNiche: z.enum(NICHE_OPTIONS, {
+        error: "Choose a primary niche.",
+      }),
+    })
+    .refine((values) => values.niches.includes(values.primaryNiche), {
+      path: ["primaryNiche"],
+      error: "Your primary niche must be one of your selected niches.",
+    }),
   7: z.object({ languages: stringOptions(LANGUAGE_OPTIONS, 1, 6, "languages") }),
   8: z.object({ contentTypes: stringOptions(CONTENT_TYPE_OPTIONS, 1, 6, "content types") }),
   // Step 9 (social accounts) is saved through its own add/remove

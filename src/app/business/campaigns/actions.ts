@@ -30,6 +30,7 @@ function rawCampaign(formData: FormData) {
     description: value(formData, "description"),
     category: value(formData, "category"),
     platforms: formData.getAll("platforms"),
+    target_niches: formData.getAll("target_niches"),
     collaboration_type: value(formData, "collaboration_type"),
     budget_min: value(formData, "budget_min"),
     budget_max: value(formData, "budget_max"),

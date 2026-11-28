@@ -9,6 +9,7 @@ import {
   COLLABORATION_TYPES,
 } from "@/types/campaign.types";
 import { COLLABORATION_STATUSES } from "@/types/collaboration.types";
+import { NICHE_OPTIONS } from "@/types/creator.types";
 
 /**
  * Business forms submit FormData, so numbers are strings and empty
@@ -78,6 +79,13 @@ const campaignBaseSchema = z.object({
   platforms: z
     .array(z.enum(CAMPAIGN_PLATFORMS))
     .min(1, { error: "Select at least one platform." }),
+  target_niches: z
+    .array(z.enum(NICHE_OPTIONS))
+    .min(1, { error: "Select at least one target niche." })
+    .max(5, { error: "Select at most 5 target niches." })
+    .refine((values) => new Set(values).size === values.length, {
+      error: "Remove duplicate niches before saving.",
+    }),
   collaboration_type: z.enum(COLLABORATION_TYPES, {
     error: "Choose a collaboration type.",
   }),

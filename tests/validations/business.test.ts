@@ -15,6 +15,7 @@ const validCampaign = {
   description: "We are launching a new summer collection and need creators.",
   category: "Fashion",
   platforms: ["instagram", "youtube"],
+  target_niches: ["fashion", "lifestyle"],
   collaboration_type: "paid",
   budget_min: "500",
   budget_max: "1500.50",
@@ -93,6 +94,24 @@ describe("campaignCreateSchema", () => {
       platforms: ["myspace", "tiktok"],
     });
     expect(parsed.success).toBe(false);
+  });
+
+  it("requires target niches and rejects duplicates", () => {
+    expect(
+      campaignCreateSchema.safeParse({ ...validCampaign, target_niches: [] }).success,
+    ).toBe(false);
+    expect(
+      campaignCreateSchema.safeParse({
+        ...validCampaign,
+        target_niches: ["fashion", "fashion"],
+      }).success,
+    ).toBe(false);
+    expect(
+      campaignCreateSchema.safeParse({
+        ...validCampaign,
+        target_niches: ["not-a-niche"],
+      }).success,
+    ).toBe(false);
   });
 
   it("requires at least one platform and deliverable", () => {

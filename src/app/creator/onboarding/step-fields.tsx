@@ -15,6 +15,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CONTENT_TYPE_OPTIONS,
@@ -208,16 +215,7 @@ export function StepFields({ step, form }: { step: number; form: WizardForm }) {
       );
 
     case 6:
-      return (
-        <MultiCheckboxField
-          form={form}
-          name="niches"
-          label="Your niches"
-          hint="Pick up to 5 topics you create about."
-          options={NICHE_OPTIONS}
-          max={5}
-        />
-      );
+      return <NicheFields form={form} />;
 
     case 7:
       return (
@@ -294,6 +292,7 @@ const FIELD_LABELS: Partial<Record<FieldPath<OnboardingValues>, string>> = {
   state: "State / region",
   bio: "About you",
   niches: "Niches",
+  primaryNiche: "Primary niche",
   languages: "Languages",
   contentTypes: "Content types",
   collaborationPreferences: "Open to",
@@ -392,5 +391,111 @@ function MultiCheckboxField({
         </FormItem>
       )}
     />
+  );
+}
+
+/**
+ * Step 6: multiple niches with exactly one primary. The primary picker
+ * only offers niches that are already selected; removing the current
+ * primary promotes the first remaining niche (no setState-in-effect).
+ */
+function NicheFields({ form }: { form: WizardForm }) {
+  const niches = useWatch({ control: form.control, name: "niches" });
+  const currentPrimary = useWatch({ control: form.control, name: "primaryNiche" });
+
+  function toggleNiche(slug: string, checked: boolean) {
+    const next = checked
+      ? [...niches.filter((item) => item !== slug), slug]
+      : niches.filter((item) => item !== slug);
+
+    form.setValue("niches", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (!next.includes(currentPrimary as string)) {
+      form.setValue("primaryNiche", (next[0] ?? "") as typeof currentPrimary, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }
+
+  return (
+    <div className="grid gap-5">
+      <FormField
+        control={form.control}
+        name="niches"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Your niches</FormLabel>
+            <FormDescription>
+              Pick up to 5 topics you create about. Choose one as your primary
+              niche below — it carries the strongest weight in recommendations.
+            </FormDescription>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {NICHE_OPTIONS.map((option) => {
+                const checked = field.value.includes(option);
+                const atLimit = !checked && field.value.length >= 5;
+                return (
+                  <label
+                    key={option}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-2xl border p-2.5 text-sm transition-colors",
+                      "hover:bg-muted",
+                      checked ? "border-primary bg-primary/5" : "border-border",
+                      atLimit && "cursor-not-allowed opacity-50",
+                    )}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={atLimit}
+                      onCheckedChange={(value) => toggleNiche(option, value === true)}
+                    />
+                    <span className="leading-tight">{labelFor(option)}</span>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {field.value.length}/5 selected
+            </p>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="primaryNiche"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Primary niche</FormLabel>
+            <FormDescription>
+              Your main category. It must be one of the niches selected above.
+            </FormDescription>
+            <Select
+              value={field.value || undefined}
+              onValueChange={field.onChange}
+              disabled={niches.length === 0}
+            >
+              <FormControl>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose your primary niche" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {niches.map((slug) => (
+                  <SelectItem key={slug} value={slug}>
+                    {labelFor(slug)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 }
