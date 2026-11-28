@@ -1,5 +1,10 @@
+import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  GOOGLE_AUTH_COOKIE,
+  parseGoogleAuthIntent,
+} from "@/lib/auth/google";
 import { emailOtpTypeSchema, sanitizeNextPath } from "@/lib/validations/auth";
 import { homePathForRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -24,8 +29,18 @@ export async function GET(request: NextRequest) {
   const rawNext = searchParams.get("next");
   const errorDescription = searchParams.get("error_description");
 
-  const next = sanitizeNextPath(rawNext);
+  let next = sanitizeNextPath(rawNext);
   const otpType = emailOtpTypeSchema.safeParse(type);
+
+  const cookieStore = await cookies();
+  const googleIntent = parseGoogleAuthIntent(
+    cookieStore.get(GOOGLE_AUTH_COOKIE)?.value,
+  );
+  if (googleIntent) {
+    // One-time use: the role/redirect state must not survive another callback.
+    cookieStore.delete(GOOGLE_AUTH_COOKIE);
+    next = next ?? googleIntent.next;
+  }
 
   if (errorDescription) {
     const params = new URLSearchParams({ error: errorDescription });
@@ -59,6 +74,15 @@ export async function GET(request: NextRequest) {
   } else {
     // Nothing to confirm — send the user somewhere sensible.
     return NextResponse.redirect(`${origin}/login`);
+  }
+
+  // Google OAuth cannot carry app metadata, so apply the role selected on
+  // the signup form only if this profile was created by this attempt.
+  if (googleIntent) {
+    await supabase.rpc("apply_google_signup_role", {
+      p_role: googleIntent.role,
+      p_started_at: new Date(googleIntent.issuedAt).toISOString(),
+    });
   }
 
   // Determine where to land based on the (now confirmed) session.

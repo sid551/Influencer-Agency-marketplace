@@ -69,6 +69,26 @@ GoTrue rejects redirect URLs that are not allow-listed and silently falls back
 to the Site URL, which breaks email confirmation and password-reset links.
 The local allow-list is kept in `supabase/config.jsonc`.
 
+### Google Sign-In
+
+Google uses the same `/auth/confirm` callback as email links, so no extra
+redirect URL is needed. To enable it:
+
+1. Create Google OAuth credentials and add `<site-url>/auth/confirm` as an
+   authorized redirect URI (for local development:
+   `http://localhost:3000/auth/confirm`).
+2. Hosted Supabase: enable the Google provider in **Authentication → Providers**
+   and paste the client ID/secret there. Local Supabase: set
+   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and
+   `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the Supabase CLI environment and
+   set `auth.external.google.enabled` to `true` in `supabase/config.jsonc`.
+3. Use **Sign up with Google** when choosing Creator or Business. The role is
+   carried through a short-lived httpOnly cookie and applied only to profiles
+   created by that sign-in attempt. Existing accounts keep their current role
+   and return to their role-based dashboard.
+
+No Google secrets are exposed to the browser.
+
 ### Email delivery with Brevo
 
 Production auth emails are sent through Brevo SMTP. Local development keeps
@@ -151,10 +171,11 @@ Open http://localhost:3000.
 
 ## Implemented in Phase 3
 
-- **Auth:** role-aware signup (`creator` / `business`), login, logout,
-  email confirmation (PKCE and OTP links), resend confirmation, forgot-password
-  and reset-password flows. All inputs are re-validated with Zod in Server
-  Actions; `next` redirect targets are restricted to same-origin paths.
+- **Auth:** role-aware signup (`creator` / `business`) with email or Google,
+  login, logout, email confirmation (PKCE and OTP links), resend confirmation,
+  forgot-password and reset-password flows. All inputs are re-validated with
+  Zod in Server Actions; `next` redirect targets are restricted to same-origin
+  paths.
 - **Route gating:** `src/proxy.ts` refreshes Supabase cookies and redirects
   logged-out visitors away from `/creator/*`; signed-in users are redirected
   away from `/login` and `/signup`.

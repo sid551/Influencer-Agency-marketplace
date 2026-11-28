@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon, Loader2Icon } from "lucide-react";
 
 import { login, type AuthFormState } from "@/app/(auth)/actions";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { authErrorMessage } from "@/lib/auth-error";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,19 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
+
+      <div className="mt-6">
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            or
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="mt-4">
+          <GoogleAuthButton role="creator" next={next} />
+        </div>
+      </div>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New here?{" "}

@@ -987,6 +987,10 @@ export type Database = {
       };
     };
     Functions: {
+      apply_google_signup_role: {
+        Args: { p_role: string; p_started_at: string };
+        Returns: boolean;
+      };
       decline_creator_collaboration: {
         Args: { p_collaboration_id: string };
         Returns: boolean;

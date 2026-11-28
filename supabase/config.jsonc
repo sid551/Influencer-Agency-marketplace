@@ -406,6 +406,16 @@
         "skip_nonce_check": false,
         // If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
         "email_optional": false
+      },
+      // Google uses the app's existing /auth/confirm callback, which is
+      // already in additional_redirect_urls above. Enable after adding the
+      // OAuth client credentials. For hosted projects configure the provider
+      // in Supabase Dashboard → Authentication → Providers instead.
+      "google": {
+        "enabled": false,
+        "client_id": "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)",
+        "secret": "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)",
+        "skip_nonce_check": false
       }
     },
 

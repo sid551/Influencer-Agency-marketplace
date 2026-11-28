@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -9,6 +10,13 @@ import {
   signupSchema,
   sanitizeNextPath,
 } from "@/lib/validations/auth";
+import {
+  encodeGoogleAuthIntent,
+  googleAuthCookieOptions,
+  googleRoleSchema,
+  GOOGLE_AUTH_COOKIE,
+  type GoogleRole,
+} from "@/lib/auth/google";
 import { homePathForRole } from "@/lib/auth/session";
 import { authErrorMessage } from "@/lib/auth-error";
 import { createClient } from "@/lib/supabase/server";
@@ -103,6 +111,51 @@ export async function login(
     .maybeSingle();
 
   redirect(next ?? homePathForRole(profile?.role));
+}
+
+// ---------------------------------------------------------------
+// Google Sign-In
+// ---------------------------------------------------------------
+
+/**
+ * Starts Supabase's PKCE Google flow. The selected role and safe return path
+ * travel in a short-lived httpOnly cookie because OAuth sign-in cannot carry
+ * app metadata. /auth/confirm reads the cookie after the provider callback.
+ */
+export async function startGoogleSignIn(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const roleResult = googleRoleSchema.safeParse(formData.get("role"));
+  const role: GoogleRole = roleResult.success ? roleResult.data : "creator";
+  const next = sanitizeNextPath(formData.get("next"));
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    GOOGLE_AUTH_COOKIE,
+    encodeGoogleAuthIntent({ role, next, issuedAt: Date.now() }),
+    googleAuthCookieOptions(siteUrl()),
+  );
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${siteUrl()}/auth/confirm`,
+    },
+  });
+
+  if (error) {
+    return { ...EMPTY_STATE, error: authErrorMessage(error.message) };
+  }
+  if (!data.url) {
+    return {
+      ...EMPTY_STATE,
+      error: "Google Sign-In is not configured. Please use email instead.",
+    };
+  }
+
+  redirect(data.url);
 }
 
 // ---------------------------------------------------------------
