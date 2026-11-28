@@ -4,6 +4,7 @@ import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
+import { creatorCampaignPath } from "@/lib/campaign-paths";
 import {
   applicationStatusVariant,
   campaignStatusVariant,
@@ -116,7 +117,11 @@ function ApplicationCard({
             </div>
             <div className="min-w-0">
               <Link
-                href={`/creator/campaigns/${app.campaign_id}`}
+                href={
+                  app.campaign
+                    ? creatorCampaignPath(app.campaign)
+                    : `/creator/campaigns/${app.campaign_id}`
+                }
                 className="block truncate text-sm font-medium hover:underline"
               >
                 {app.campaign?.title ?? "Campaign"}

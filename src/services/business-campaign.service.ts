@@ -1,5 +1,6 @@
 import "server-only";
 
+import { campaignLookupColumn } from "@/lib/campaign-paths";
 import { createClient } from "@/lib/supabase/server";
 import type { CampaignValues } from "@/lib/validations/business";
 import type { Campaign } from "@/types/campaign.types";
@@ -27,16 +28,17 @@ export async function listBusinessCampaigns(
   return (data as Campaign[]) ?? [];
 }
 
-/** A single owned campaign; RLS and the explicit filter both scope it. */
+/** A single owned campaign by slug or legacy UUID. RLS and the explicit
+ *  business filter both scope it. */
 export async function getBusinessCampaign(
   userId: string,
-  campaignId: string,
+  reference: string,
 ): Promise<Campaign | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("id", campaignId)
+    .eq(campaignLookupColumn(reference), reference)
     .eq("business_profile_id", userId)
     .maybeSingle();
 

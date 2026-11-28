@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { MessageSquareIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignMessagesPath } from "@/lib/campaign-paths";
 import { campaignStatusVariant } from "@/lib/business-format";
 import { campaignStatusLabel } from "@/lib/labels";
 import { listBusinessMessageCampaigns } from "@/services/message.service";
@@ -77,7 +78,7 @@ function MessagesView({ campaigns }: { campaigns: BusinessMessageCampaign[] }) {
           {campaigns.map((campaign) => (
             <Link
               key={campaign.id}
-              href={`/business/messages/campaigns/${campaign.id}`}
+              href={campaignMessagesPath(campaign)}
               className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Card className="transition-colors hover:bg-muted/50">

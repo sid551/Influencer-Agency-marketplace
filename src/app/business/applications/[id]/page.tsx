@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignPath } from "@/lib/campaign-paths";
 import {
   applicationStatusVariant,
   formatPrice,
@@ -65,8 +66,8 @@ async function ApplicationLoader({
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
         href={
-          application.campaign_id
-            ? `/business/campaigns/${application.campaign_id}/applications`
+          application.campaign
+            ? campaignPath(application.campaign, "applications")
             : "/business/campaigns"
         }
         className="text-sm text-muted-foreground hover:text-foreground"

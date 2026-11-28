@@ -1,18 +1,22 @@
 import Image from "next/image";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
+import { campaignSlug } from "@/lib/campaign-paths";
 import { campaignStatusVariant } from "@/lib/business-format";
 import {
   campaignStatusLabel,
   simpleCampaignStatus,
 } from "@/lib/labels";
 import { formatMoneyRange } from "@/lib/money";
-import { getCampaignById, hasAppliedToCampaign } from "@/services/campaign.service";
+import {
+  getCampaignByReference,
+  hasAppliedToCampaign,
+} from "@/services/campaign.service";
 import { getOwnCreatorProfile } from "@/services/creator-profile.service";
 import {
   Card,
@@ -46,17 +50,20 @@ export default function CampaignDetailPage({
 
 async function CampaignLoader({ params }: { params: Promise<{ id: string }> }) {
   await connection();
-  const { id } = await params;
+  const { id: reference } = await params;
   const { user } = await requireCreator();
-  const [campaign, applied, creatorProfile] = await Promise.all([
-    getCampaignById(id),
-    hasAppliedToCampaign(user.id, id),
+  const campaign = await getCampaignByReference(reference);
+  if (!campaign) notFound();
+
+  // UUID bookmarks still resolve, then move to the readable URL.
+  if (reference !== campaignSlug(campaign)) {
+    redirect(`/creator/campaigns/${campaignSlug(campaign)}`);
+  }
+
+  const [applied, creatorProfile] = await Promise.all([
+    hasAppliedToCampaign(user.id, campaign.id),
     getOwnCreatorProfile(user.id),
   ]);
-
-  if (!campaign) {
-    notFound();
-  }
 
   return (
     <CampaignView
@@ -72,7 +79,7 @@ function CampaignView({
   applied,
   onboardingCompleted,
 }: {
-  campaign: NonNullable<Awaited<ReturnType<typeof getCampaignById>>>;
+  campaign: NonNullable<Awaited<ReturnType<typeof getCampaignByReference>>>;
   applied: boolean;
   onboardingCompleted: boolean;
 }) {

@@ -64,6 +64,8 @@ export const BUSINESS_APPLICATION_TRANSITIONS: Record<
 /** Row type for public.campaigns. */
 export interface Campaign {
   id: string;
+  /** Stable URL-safe reference; the UUID id stays internal. */
+  slug: string;
   business_profile_id: string;
   title: string;
   description: string;
@@ -112,7 +114,13 @@ export interface CampaignApplication {
 export interface ApplicationWithCampaign extends CampaignApplication {
   campaign: Pick<
     Campaign,
-    "id" | "title" | "category" | "platforms" | "application_deadline" | "status"
+    | "id"
+    | "slug"
+    | "title"
+    | "category"
+    | "platforms"
+    | "application_deadline"
+    | "status"
   > | null;
 }
 

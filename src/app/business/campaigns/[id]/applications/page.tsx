@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeftIcon, MessagesSquareIcon, PencilIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import {
+  campaignMessagesPath,
+  campaignPath,
+  campaignSlug,
+} from "@/lib/campaign-paths";
 import {
   bidNicheOptions,
   bidSortFromValue,
@@ -27,7 +32,6 @@ import {
   SIMPLE_APPLICATION_FILTERS,
   simpleApplicationStatus,
 } from "@/lib/labels";
-import { uuidSchema } from "@/lib/validations/ids";
 import {
   listBusinessCampaignApplications,
 } from "@/services/business-application.service";
@@ -74,17 +78,23 @@ async function CampaignApplicationsLoader({
   searchParams: Promise<{ status?: string; niche?: string; sort?: string }>;
 }) {
   await connection();
-  const { id } = await params;
-  const parsedId = uuidSchema.safeParse(id);
-  if (!parsedId.success) notFound();
-
+  const { id: reference } = await params;
   const { user } = await requireBusiness();
-  const [campaign, applications, query] = await Promise.all([
-    getBusinessCampaign(user.id, parsedId.data),
-    listBusinessCampaignApplications(user.id, parsedId.data),
+  const [campaign, query] = await Promise.all([
+    getBusinessCampaign(user.id, reference),
     searchParams,
   ]);
   if (!campaign) notFound();
+
+  // Old UUID links resolve to the campaign, then move to its short URL.
+  if (reference !== campaignSlug(campaign)) {
+    redirect(campaignPath(campaign, "applications"));
+  }
+
+  const applications = await listBusinessCampaignApplications(
+    user.id,
+    campaign.id,
+  );
 
   const statusFilter = applicationFilterFromValue(query.status);
   const nicheFilter = nicheFilterFromValue(query.niche);
@@ -136,12 +146,12 @@ async function CampaignApplicationsLoader({
             finished={campaignFinished}
           />
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/business/campaigns/${campaign.id}/edit`}>
+            <Link href={campaignPath(campaign, "edit")}>
               <PencilIcon className="size-4" /> Edit campaign
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/business/messages/campaigns/${campaign.id}`}>
+            <Link href={campaignMessagesPath(campaign)}>
               <MessagesSquareIcon className="size-4" /> Message creators
             </Link>
           </Button>
@@ -217,7 +227,7 @@ async function CampaignApplicationsLoader({
               <Button type="submit" size="sm">Filter</Button>
               {hasFilters ? (
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/business/campaigns/${campaign.id}/applications`}>
+                  <Link href={campaignPath(campaign, "applications")}>
                     Clear
                   </Link>
                 </Button>
@@ -307,7 +317,13 @@ function ApplicationRow({
           <SelectBidButton applicationId={application.id} />
         ) : group === "selected" ? (
           <Button size="sm" variant="outline" asChild>
-            <Link href={`/business/messages/campaigns/${application.campaign_id}`}>
+            <Link
+              href={
+                application.campaign
+                  ? campaignMessagesPath(application.campaign)
+                  : "/business/messages"
+              }
+            >
               Open chat
             </Link>
           </Button>

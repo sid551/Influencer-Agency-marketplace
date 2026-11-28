@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeftIcon, MessageSquareIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import {
+  campaignMessagesPath,
+  campaignPath,
+  campaignSlug,
+} from "@/lib/campaign-paths";
 import { applicationStatusVariant, formatDate } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
 import {
@@ -12,7 +17,6 @@ import {
   applicationStatusLabel,
   SIMPLE_APPLICATION_FILTERS,
 } from "@/lib/labels";
-import { uuidSchema } from "@/lib/validations/ids";
 import {
   getBusinessCampaign,
 } from "@/services/business-campaign.service";
@@ -58,24 +62,27 @@ async function CampaignMessagesLoader({
   searchParams: Promise<{ status?: string }>;
 }) {
   await connection();
-  const { campaignId } = await params;
+  const { campaignId: reference } = await params;
   const query = await searchParams;
-  if (!uuidSchema.safeParse(campaignId).success) notFound();
-
   const { user } = await requireBusiness();
-  const campaign = await getBusinessCampaign(user.id, campaignId);
+  const campaign = await getBusinessCampaign(user.id, reference);
   if (!campaign) notFound();
+
+  // Keep shared UUID bookmarks working without leaving them in the address bar.
+  if (reference !== campaignSlug(campaign)) {
+    redirect(campaignMessagesPath(campaign));
+  }
 
   const status = applicationConversationFilterFromValue(query.status);
   const applicants = await listCampaignApplicantConversations(
     user.id,
-    campaignId,
+    campaign.id,
     status,
   );
 
   return (
     <CampaignMessagesView
-      campaignId={campaignId}
+      campaignRef={campaignSlug(campaign)}
       campaignTitle={campaign.title}
       applicants={applicants}
       status={status}
@@ -88,12 +95,12 @@ const FILTERS = SIMPLE_APPLICATION_FILTERS.filter(
 );
 
 function CampaignMessagesView({
-  campaignId,
+  campaignRef,
   campaignTitle,
   applicants,
   status,
 }: {
-  campaignId: string;
+  campaignRef: string;
   campaignTitle: string;
   applicants: BusinessCampaignApplicantThread[];
   status: ApplicationStatus | "all";
@@ -124,7 +131,7 @@ function CampaignMessagesView({
             variant={filter.value === status ? "default" : "outline"}
           >
             <Link
-              href={`/business/messages/campaigns/${campaignId}?status=${filter.value}`}
+              href={`${campaignMessagesPath({ id: campaignRef })}?status=${filter.value}`}
             >
               {filter.label}
             </Link>
@@ -146,7 +153,7 @@ function CampaignMessagesView({
             </p>
             <Button asChild variant="outline" size="sm">
               <Link
-                href={`/business/campaigns/${campaignId}/applications`}
+                href={campaignPath({ id: campaignRef }, "applications")}
               >
                 Review applications
               </Link>

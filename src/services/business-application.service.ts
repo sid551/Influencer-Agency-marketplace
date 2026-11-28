@@ -20,7 +20,7 @@ const CREATOR_COLUMNS =
   "profile_id, full_name, username, avatar_url, city, state, niches";
 
 type ApplicationRow = Omit<BusinessApplication, "campaign" | "creator"> & {
-  campaigns: { id: string; title: string; status: string } | null;
+  campaigns: { id: string; slug: string; title: string; status: string } | null;
 };
 
 type DashboardApplicationRow = Pick<BusinessApplication, "campaign_id">;
@@ -68,6 +68,7 @@ function toBusinessApplication(
     campaign: campaigns
       ? {
           id: campaigns.id,
+          slug: campaigns.slug,
           title: campaigns.title,
           status: campaigns.status as CampaignStatus,
         }
@@ -84,7 +85,7 @@ export async function listBusinessApplications(
   const { data, error } = await supabase
     .from("campaign_applications")
     .select(
-      `*, campaigns!inner ( id, title, status )`,
+      `*, campaigns!inner ( id, slug, title, status )`,
     )
     .eq("campaigns.business_profile_id", userId)
     .order("created_at", { ascending: false });
@@ -106,7 +107,7 @@ export async function listBusinessCampaignApplications(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("campaign_applications")
-    .select(`*, campaigns!inner ( id, title, status )`)
+    .select(`*, campaigns!inner ( id, slug, title, status )`)
     .eq("campaign_id", campaignId)
     .eq("campaigns.business_profile_id", userId)
     .order("created_at", { ascending: false });
@@ -128,7 +129,7 @@ export async function getBusinessApplication(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("campaign_applications")
-    .select(`*, campaigns!inner ( id, title, status )`)
+    .select(`*, campaigns!inner ( id, slug, title, status )`)
     .eq("id", applicationId)
     .eq("campaigns.business_profile_id", userId)
     .maybeSingle();

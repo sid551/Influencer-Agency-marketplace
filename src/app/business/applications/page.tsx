@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
-import { uuidSchema } from "@/lib/validations/ids";
 
 export const metadata = { title: "Applications" };
 export const instant = false;
@@ -12,10 +11,13 @@ export default async function LegacyBusinessApplicationsPage({
   searchParams: Promise<{ campaign?: string }>;
 }) {
   const { campaign } = await searchParams;
-  const parsed = typeof campaign === "string" ? uuidSchema.safeParse(campaign) : null;
+  const reference =
+    typeof campaign === "string" && /^[A-Za-z0-9-]{1,60}$/.test(campaign)
+      ? campaign
+      : null;
   redirect(
-    parsed?.success
-      ? `/business/campaigns/${parsed.data}/applications`
+    reference
+      ? `/business/campaigns/${reference}/applications`
       : "/business/campaigns",
   );
   return null;

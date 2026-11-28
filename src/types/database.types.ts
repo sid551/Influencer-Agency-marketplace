@@ -184,6 +184,7 @@ export type Database = {
           image_url: string | null;
           location: string | null;
           platforms: string[];
+          slug: string;
           status: string;
           title: string;
           updated_at: string;
@@ -206,6 +207,7 @@ export type Database = {
           image_url?: string | null;
           location?: string | null;
           platforms?: string[];
+          slug?: string | null;
           status?: string;
           title: string;
           updated_at?: string;
@@ -227,6 +229,7 @@ export type Database = {
           image_url?: string | null;
           location?: string | null;
           platforms?: string[];
+          slug?: string | null;
           status?: string;
           title?: string;
           updated_at?: string;
@@ -1015,6 +1018,7 @@ export type Database = {
           image_public_id: string | null;
           image_url: string | null;
           location: string | null;
+          slug: string;
           match_score: number;
           match_section: string;
           platforms: string[];

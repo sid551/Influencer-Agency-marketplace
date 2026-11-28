@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { getBusinessCampaign } from "@/services/business-campaign.service";
 import { messageSchema } from "@/lib/validations/collaboration";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
@@ -76,15 +77,20 @@ export async function openApplicationConversationAction(
   campaignId: string,
 ): Promise<void> {
   const id = uuidSchema.safeParse(applicationId);
-  if (!id.success) return;
+  const campaign = uuidSchema.safeParse(campaignId);
+  if (!id.success || !campaign.success) return;
 
   const { user } = await requireBusiness();
   const result = await getOrOpenApplicationConversation(user.id, id.data);
   if (!result.ok) return;
 
+  const campaignRow = await getBusinessCampaign(user.id, campaign.data);
   revalidatePath("/business", "layout");
   revalidatePath("/business/messages");
-  revalidatePath(`/business/messages/campaigns/${campaignId}`);
+  revalidatePath(`/business/messages/campaigns/${campaign.data}`);
+  if (campaignRow) {
+    revalidatePath(`/business/messages/campaigns/${campaignRow.slug}`);
+  }
   redirect(`/business/messages/${result.data.id}`);
 }
 

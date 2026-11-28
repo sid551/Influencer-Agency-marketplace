@@ -56,9 +56,22 @@ function rawCampaign(formData: FormData) {
   };
 }
 
-function revalidateCampaignViews() {
+function revalidateCampaignViews(
+  campaign?: { id: string; slug?: string | null } | null,
+) {
   revalidatePath("/business");
   revalidatePath("/business/campaigns");
+  if (!campaign) return;
+
+  // Both the readable URL and any old UUID bookmark should refresh.
+  for (const reference of [campaign.id, campaign.slug]) {
+    if (!reference) continue;
+    revalidatePath(`/business/campaigns/${reference}`);
+    revalidatePath(`/business/campaigns/${reference}/applications`);
+    revalidatePath(`/business/campaigns/${reference}/edit`);
+    revalidatePath(`/business/messages/campaigns/${reference}`);
+    revalidatePath(`/creator/campaigns/${reference}`);
+  }
 }
 
 function imageUploadError(message: string): FormActionState {
@@ -166,8 +179,7 @@ export async function updateBusinessCampaignAction(
     await removeCampaignImage(existing.image_public_id);
   }
 
-  revalidateCampaignViews();
-  revalidatePath(`/business/campaigns/${id.data}`);
+  revalidateCampaignViews(result.data);
   redirect("/business/campaigns");
 }
 
@@ -190,9 +202,7 @@ export async function completeCampaignAction(
     return { ...EMPTY_FORM_STATE, message: result.message };
   }
 
-  revalidateCampaignViews();
-  revalidatePath(`/business/campaigns/${id.data}`);
-  revalidatePath(`/business/campaigns/${id.data}/applications`);
+  revalidateCampaignViews(result.data);
   revalidatePath("/creator/applications");
   revalidatePath("/creator/campaigns", "layout");
   return { ok: true, message: "Campaign marked as finished.", fieldErrors: {} };

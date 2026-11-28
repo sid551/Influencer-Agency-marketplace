@@ -5,6 +5,7 @@ export type RecommendationSection = "recommended" | "related" | "explore";
 /** One campaign row as returned by the recommendation RPC. */
 export interface RecommendedCampaign {
   id: string;
+  slug: string;
   business_profile_id: string;
   title: string;
   description: string;

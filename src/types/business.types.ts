@@ -30,7 +30,12 @@ export interface BusinessApplication {
   status: ApplicationStatus;
   created_at: string;
   updated_at: string;
-  campaign: { id: string; title: string; status: CampaignStatus } | null;
+  campaign: {
+    id: string;
+    slug: string;
+    title: string;
+    status: CampaignStatus;
+  } | null;
   creator: BusinessCreator | null;
 }
 
@@ -70,6 +75,7 @@ export interface BusinessConversationDetail {
 /** A campaign shown in the business's campaign-wise message inbox. */
 export interface BusinessMessageCampaign {
   id: string;
+  slug: string;
   title: string;
   status: CampaignStatus;
   applicationCount: number;

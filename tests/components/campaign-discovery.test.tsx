@@ -16,6 +16,7 @@ function campaign(
 ): RecommendedCampaign {
   return {
     id,
+    slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-test1234`,
     business_profile_id: "business-1",
     title,
     description: "A short campaign description.",

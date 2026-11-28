@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRightIcon, ChevronLeftIcon, ChevronRightIcon, SparklesIcon } from "lucide-react";
 
 import type { RecommendationPage, RecommendedCampaign } from "@/types/recommendation.types";
+import { creatorCampaignPath } from "@/lib/campaign-paths";
 import { label } from "@/lib/labels";
 import { formatMoneyRange } from "@/lib/money";
 import { RECOMMENDATION_SECTIONS } from "@/lib/recommendation";
@@ -168,7 +169,7 @@ export function CampaignCard({
 
   return (
     <Link
-      href={`/creator/campaigns/${campaign.id}`}
+      href={creatorCampaignPath(campaign)}
       className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       aria-label={`View details for ${campaign.title}`}
     >

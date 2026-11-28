@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignMessagesPath, campaignSlug } from "@/lib/campaign-paths";
 import { collaborationStatusVariant } from "@/lib/business-format";
 import {
   collaborationStatusLabel,
@@ -50,14 +51,16 @@ async function ThreadLoader({ params }: { params: Promise<{ id: string }> }) {
   if (!detail) notFound();
 
   const messages = await listMessages(id);
-  const campaignId = detail.collaboration.campaign?.id ?? null;
+  const campaignRef = detail.collaboration.campaign
+    ? campaignSlug(detail.collaboration.campaign)
+    : null;
 
   return (
     <ThreadView
       detail={detail}
       messages={messages}
       currentUserId={user.id}
-      campaignId={campaignId}
+      campaignRef={campaignRef}
     />
   );
 }
@@ -66,12 +69,12 @@ function ThreadView({
   detail,
   messages,
   currentUserId,
-  campaignId,
+  campaignRef,
 }: {
   detail: NonNullable<Awaited<ReturnType<typeof getBusinessConversation>>>;
   messages: Awaited<ReturnType<typeof listMessages>>;
   currentUserId: string;
-  campaignId: string | null;
+  campaignRef: string | null;
 }) {
   const creatorName =
     detail.collaboration.creator?.full_name ??
@@ -94,8 +97,8 @@ function ThreadView({
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
         href={
-          campaignId
-            ? `/business/messages/campaigns/${campaignId}?status=${backStatus}`
+          campaignRef
+            ? `${campaignMessagesPath({ id: campaignRef })}?status=${backStatus}`
             : "/business/messages"
         }
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
