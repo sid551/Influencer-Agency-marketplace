@@ -16,6 +16,7 @@ import {
   type CampaignImageAsset,
 } from "@/services/campaign-image.service";
 import {
+  completeBusinessCampaign,
   createBusinessCampaign,
   getBusinessCampaign,
   updateBusinessCampaign,
@@ -168,4 +169,31 @@ export async function updateBusinessCampaignAction(
   revalidateCampaignViews();
   revalidatePath(`/business/campaigns/${id.data}`);
   redirect("/business/campaigns");
+}
+
+/** End a campaign so creators who applied can see that work is finished. */
+export async function completeCampaignAction(
+  campaignId: string,
+  _prev: FormActionState,
+  _formData: FormData,
+): Promise<FormActionState> {
+  void _prev;
+  void _formData;
+  const id = uuidSchema.safeParse(campaignId);
+  if (!id.success) {
+    return { ...EMPTY_FORM_STATE, message: "Invalid campaign." };
+  }
+
+  const { user } = await requireBusiness();
+  const result = await completeBusinessCampaign(user.id, id.data);
+  if (!result.ok) {
+    return { ...EMPTY_FORM_STATE, message: result.message };
+  }
+
+  revalidateCampaignViews();
+  revalidatePath(`/business/campaigns/${id.data}`);
+  revalidatePath(`/business/campaigns/${id.data}/applications`);
+  revalidatePath("/creator/applications");
+  revalidatePath("/creator/campaigns", "layout");
+  return { ok: true, message: "Campaign marked as finished.", fieldErrors: {} };
 }

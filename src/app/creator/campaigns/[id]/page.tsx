@@ -6,6 +6,11 @@ import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
+import { campaignStatusVariant } from "@/lib/business-format";
+import {
+  campaignStatusLabel,
+  simpleCampaignStatus,
+} from "@/lib/labels";
 import { formatMoneyRange } from "@/lib/money";
 import { getCampaignById, hasAppliedToCampaign } from "@/services/campaign.service";
 import { getOwnCreatorProfile } from "@/services/creator-profile.service";
@@ -71,6 +76,8 @@ function CampaignView({
   applied: boolean;
   onboardingCompleted: boolean;
 }) {
+  const campaignEnded = simpleCampaignStatus(campaign.status) === "done";
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
@@ -82,6 +89,14 @@ function CampaignView({
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-6">
+          {campaignEnded ? (
+            <Card className="border-amber-500/40 bg-amber-500/10">
+              <CardContent className="p-4 text-sm">
+                This campaign has ended. The details stay available as a
+                record, but new applications are closed.
+              </CardContent>
+            </Card>
+          ) : null}
           <Card>
             <CardContent className="p-0 relative aspect-[4/3] overflow-hidden bg-muted">
               {campaign.image_url ? (
@@ -104,6 +119,12 @@ function CampaignView({
                 }
               >
                 {campaign.collaboration_type.replace(/_/g, " ")}
+              </Badge>
+              <Badge
+                className="absolute top-3 right-3 z-10"
+                variant={campaignStatusVariant(campaign.status)}
+              >
+                {campaignStatusLabel(campaign.status)}
               </Badge>
             </CardContent>
             <CardHeader>
@@ -198,6 +219,7 @@ function CampaignView({
             campaignId={campaign.id}
             applied={applied}
             onboardingCompleted={onboardingCompleted}
+            ended={campaignEnded}
           />
         </div>
       </div>
@@ -226,11 +248,31 @@ function ApplyCard({
   campaignId,
   applied,
   onboardingCompleted,
+  ended,
 }: {
   campaignId: string;
   applied: boolean;
   onboardingCompleted: boolean;
+  ended: boolean;
 }) {
+  if (ended) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign ended</CardTitle>
+          <CardDescription>
+            New applications are closed for this campaign.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/creator/applications">View my applications</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (applied) {
     return (
       <Card>

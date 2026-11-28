@@ -6,6 +6,14 @@ import { ArrowLeftIcon, MessagesSquareIcon, PencilIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
 import {
+  bidNicheOptions,
+  bidSortFromValue,
+  BID_SORTS,
+  filterBidsByNiche,
+  nicheFilterFromValue,
+  sortBids,
+} from "@/lib/bids";
+import {
   applicationStatusVariant,
   campaignStatusVariant,
   formatPrice,
@@ -15,6 +23,7 @@ import {
   applicationStatusLabel,
   applicationStatusesForFilter,
   campaignStatusLabel,
+  label,
   SIMPLE_APPLICATION_FILTERS,
   simpleApplicationStatus,
 } from "@/lib/labels";
@@ -23,6 +32,8 @@ import {
   listBusinessCampaignApplications,
 } from "@/services/business-application.service";
 import { getBusinessCampaign } from "@/services/business-campaign.service";
+import { SelectBidButton } from "@/components/business/application-review-actions";
+import { CompleteCampaignButton } from "@/components/business/campaign-completion-button";
 import type { BusinessApplication } from "@/types/business.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,15 +46,15 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const metadata = { title: "Campaign applications" };
+export const metadata = { title: "Creator bids" };
 
-/** Applications live with the campaign they belong to — no global list. */
+/** Bids live with the campaign they belong to — no global list. */
 export default function CampaignApplicationsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; niche?: string; sort?: string }>;
 }) {
   return (
     <Suspense fallback={<CampaignApplicationsSkeleton />}>
@@ -60,7 +71,7 @@ async function CampaignApplicationsLoader({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; niche?: string; sort?: string }>;
 }) {
   await connection();
   const { id } = await params;
@@ -76,14 +87,24 @@ async function CampaignApplicationsLoader({
   if (!campaign) notFound();
 
   const statusFilter = applicationFilterFromValue(query.status);
+  const nicheFilter = nicheFilterFromValue(query.niche);
+  const sort = bidSortFromValue(query.sort);
   const matchingStatuses =
     statusFilter === "all" ? [] : applicationStatusesForFilter(statusFilter);
-  const filtered =
+
+  const statusMatched =
     statusFilter === "all"
       ? applications
       : applications.filter((application) =>
           matchingStatuses.includes(application.status),
         );
+  const nicheMatched = filterBidsByNiche(statusMatched, nicheFilter);
+  const filtered = sortBids(nicheMatched, sort);
+  const nicheOptions = bidNicheOptions(applications);
+  const hasFilters =
+    statusFilter !== "all" || nicheFilter !== "all" || sort !== "newest";
+  const campaignFinished =
+    campaign.status === "completed" || campaign.status === "closed";
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -110,6 +131,10 @@ async function CampaignApplicationsLoader({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <CompleteCampaignButton
+            campaignId={campaign.id}
+            finished={campaignFinished}
+          />
           <Button variant="outline" size="sm" asChild>
             <Link href={`/business/campaigns/${campaign.id}/edit`}>
               <PencilIcon className="size-4" /> Edit campaign
@@ -125,13 +150,13 @@ async function CampaignApplicationsLoader({
 
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Applications</CardTitle>
+          <CardTitle>Creator bids</CardTitle>
           <CardDescription>
             {applications.length === 0
               ? "No creators have applied to this campaign yet."
-              : `${applications.length} application${
+              : `${applications.length} creator${
                   applications.length === 1 ? "" : "s"
-                } for this campaign.`}
+                } quoted a rate. Select the ones you want at their quoted price, then complete the campaign.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -154,8 +179,43 @@ async function CampaignApplicationsLoader({
                   ))}
                 </select>
               </div>
+              <div className="grid gap-1">
+                <label htmlFor="niche" className="text-xs text-muted-foreground">
+                  Creator niche
+                </label>
+                <select
+                  id="niche"
+                  name="niche"
+                  defaultValue={nicheFilter}
+                  className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
+                >
+                  <option value="all">All niches</option>
+                  {nicheOptions.map((niche) => (
+                    <option key={niche.value} value={niche.value}>
+                      {niche.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-1">
+                <label htmlFor="sort" className="text-xs text-muted-foreground">
+                  Sort by rate
+                </label>
+                <select
+                  id="sort"
+                  name="sort"
+                  defaultValue={sort}
+                  className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
+                >
+                  {BID_SORTS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button type="submit" size="sm">Filter</Button>
-              {statusFilter !== "all" ? (
+              {hasFilters ? (
                 <Button variant="ghost" size="sm" asChild>
                   <Link href={`/business/campaigns/${campaign.id}/applications`}>
                     Clear
@@ -165,16 +225,27 @@ async function CampaignApplicationsLoader({
             </form>
           ) : null}
 
+          {campaignFinished ? (
+            <p className="mb-4 rounded-xl bg-muted p-3 text-xs text-muted-foreground">
+              This campaign is finished. Creators who applied can see that it
+              ended. Reopen it from Edit campaign to select more creators.
+            </p>
+          ) : null}
+
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {applications.length === 0
                 ? "Share the campaign with creators to start receiving proposals."
-                : "No applications match this status."}
+                : "No creators match these filters."}
             </p>
           ) : (
             <ul className="divide-y">
               {filtered.map((application) => (
-                <ApplicationRow key={application.id} application={application} />
+                <ApplicationRow
+                  key={application.id}
+                  application={application}
+                  disabled={campaignFinished}
+                />
               ))}
             </ul>
           )}
@@ -184,13 +255,20 @@ async function CampaignApplicationsLoader({
   );
 }
 
-function ApplicationRow({ application }: { application: BusinessApplication }) {
+function ApplicationRow({
+  application,
+  disabled,
+}: {
+  application: BusinessApplication;
+  disabled: boolean;
+}) {
   const creatorName =
     application.creator?.full_name ??
     application.creator?.username ??
     "Creator";
   const group = simpleApplicationStatus(application.status);
-  const inConversation = group === "in_talks" || group === "selected";
+  const canSelect =
+    !disabled && (group === "new" || group === "in_talks");
 
   return (
     <li className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -203,9 +281,20 @@ function ApplicationRow({ application }: { application: BusinessApplication }) {
         </Link>
         <p className="mt-1 text-xs text-muted-foreground">
           {application.creator?.username ? `@${application.creator.username} · ` : ""}
-          {formatPrice(application.expected_price, application.currency)} ·{" "}
-          {new Date(application.created_at).toLocaleDateString()}
+          <span className="font-medium text-foreground">
+            {formatPrice(application.expected_price, application.currency)}
+          </span>{" "}
+          · {new Date(application.created_at).toLocaleDateString()}
         </p>
+        {(application.creator?.niches ?? []).length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {(application.creator?.niches ?? []).slice(0, 4).map((niche) => (
+              <Badge key={niche} variant="secondary" className="text-[10px]">
+                {label(niche)}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
           {application.proposal}
         </p>
@@ -214,17 +303,19 @@ function ApplicationRow({ application }: { application: BusinessApplication }) {
         <Badge variant={applicationStatusVariant(application.status)}>
           {applicationStatusLabel(application.status)}
         </Badge>
-        <Button size="sm" variant={group === "closed" ? "outline" : "default"} asChild>
-          <Link
-            href={
-              inConversation
-                ? `/business/messages/campaigns/${application.campaign_id}`
-                : `/business/applications/${application.id}`
-            }
-          >
-            {inConversation ? "Open chat" : group === "new" ? "Review" : "View"}
-          </Link>
-        </Button>
+        {canSelect ? (
+          <SelectBidButton applicationId={application.id} />
+        ) : group === "selected" ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/business/messages/campaigns/${application.campaign_id}`}>
+              Open chat
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/business/applications/${application.id}`}>View</Link>
+          </Button>
+        )}
       </div>
     </li>
   );

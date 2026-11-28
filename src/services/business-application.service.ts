@@ -235,3 +235,39 @@ export async function reviewBusinessApplication(
     data: { id: applicationId, status: decision },
   };
 }
+
+/**
+ * Select a creator at the rate they quoted in their application.
+ * Other applicants stay available for the same campaign.
+ */
+export async function selectBusinessApplicationBid(
+  userId: string,
+  applicationId: string,
+): Promise<ServiceResult<{ id: string; status: ApplicationStatus }>> {
+  const application = await getBusinessApplication(userId, applicationId);
+  if (!application) {
+    return { ok: false, message: "Application not found." };
+  }
+  if (application.status !== "pending" && application.status !== "accepted") {
+    return { ok: false, message: "This creator can no longer be selected." };
+  }
+  if (
+    application.campaign?.status === "completed" ||
+    application.campaign?.status === "closed"
+  ) {
+    return { ok: false, message: "Reopen the campaign before selecting creators." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("finalize_campaign_application", {
+    p_application_id: applicationId,
+  });
+  if (error) {
+    return {
+      ok: false,
+      message: error.message || "Could not select this creator.",
+    };
+  }
+
+  return { ok: true, data: { id: applicationId, status: "finalized" } };
+}

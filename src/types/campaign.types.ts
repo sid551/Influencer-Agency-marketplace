@@ -38,8 +38,8 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
-/** Applications that have a negotiation thread. Finalized creators stay
- *  messageable after the business chooses a winner. */
+/** Applications that have a negotiation thread. Selected creators stay
+ *  messageable after the business finishes choosing creators. */
 export const MESSAGEABLE_APPLICATION_STATUSES = ["accepted", "finalized"] as const;
 
 /** Decisions a business may make on an application. Mirrors the database

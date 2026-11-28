@@ -194,3 +194,23 @@ export async function updateBusinessCampaign(
 
   return { ok: true, data: data as Campaign };
 }
+
+/** Mark an owned campaign as finished. Applicants can still see its status. */
+export async function completeBusinessCampaign(
+  userId: string,
+  campaignId: string,
+): Promise<ServiceResult<Campaign>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("campaigns")
+    .update({ status: "completed" })
+    .eq("id", campaignId)
+    .eq("business_profile_id", userId)
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) {
+    return { ok: false, message: "Could not complete this campaign." };
+  }
+  return { ok: true, data: data as Campaign };
+}

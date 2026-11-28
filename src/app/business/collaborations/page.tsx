@@ -115,7 +115,7 @@ async function CollaborationsLoader({
             <div className="flex flex-col items-start gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-lg text-sm text-muted-foreground">
                 {collaborations.length === 0
-                  ? "No finalized collaborations yet. Review applications and select a creator to start working together."
+                  ? "No selected creators yet. Review bids and select creators to start working together."
                   : "Try a different group."}
               </p>
               {collaborations.length === 0 ? (

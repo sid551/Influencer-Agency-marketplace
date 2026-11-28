@@ -4,12 +4,17 @@ import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
-import { applicationStatusVariant } from "@/lib/business-format";
+import {
+  applicationStatusVariant,
+  campaignStatusVariant,
+} from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
 import {
   SIMPLE_APPLICATION_STATUS_HELP,
   applicationStatusLabel,
+  campaignStatusLabel,
   simpleApplicationStatus,
+  simpleCampaignStatus,
 } from "@/lib/labels";
 import { listOwnApplications } from "@/services/campaign.service";
 import {
@@ -94,6 +99,9 @@ function ApplicationCard({
   app: Awaited<ReturnType<typeof listOwnApplications>>[number];
 }) {
   const group = simpleApplicationStatus(app.status);
+  const campaignGroup = app.campaign
+    ? simpleCampaignStatus(app.campaign.status)
+    : null;
   const inConversation = group === "in_talks" || group === "selected";
 
   return (
@@ -127,13 +135,28 @@ function ApplicationCard({
               </p>
             </div>
           </div>
-          <Badge variant={applicationStatusVariant(app.status)} className="text-xs">
-            {applicationStatusLabel(app.status)}
-          </Badge>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {app.campaign ? (
+              <Badge
+                variant={campaignStatusVariant(app.campaign.status)}
+                className="text-xs"
+              >
+                {campaignStatusLabel(app.campaign.status)}
+              </Badge>
+            ) : null}
+            <Badge variant={applicationStatusVariant(app.status)} className="text-xs">
+              {applicationStatusLabel(app.status)}
+            </Badge>
+          </div>
         </div>
         <p className="border-t px-4 py-2 text-xs text-muted-foreground">
           {SIMPLE_APPLICATION_STATUS_HELP[group]}
         </p>
+        {campaignGroup === "done" ? (
+          <p className="border-t px-4 py-2 text-xs text-muted-foreground">
+            This campaign has ended. Your application stays here as a record.
+          </p>
+        ) : null}
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t px-4 py-3 text-xs">
         <span className="truncate text-muted-foreground">

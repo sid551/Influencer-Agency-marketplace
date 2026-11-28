@@ -137,8 +137,8 @@ function ThreadView({
           <CardHeader>
             <CardTitle>Finish the selection</CardTitle>
             <CardDescription>
-              Finalizing agrees the price and declines the other accepted
-              creators for this campaign.
+              Finalizing agrees the price and selects this creator. Other
+              creators stay available for this campaign.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
