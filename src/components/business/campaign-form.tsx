@@ -70,12 +70,7 @@ export function CampaignForm({
   }
 
   return (
-    <form
-      action={formAction}
-      encType="multipart/form-data"
-      className="grid gap-5"
-      noValidate
-    >
+    <form action={formAction} className="grid gap-5" noValidate>
       {!state.ok && state.message ? (
         <p className="text-sm text-destructive" role="alert">
           {state.message}
