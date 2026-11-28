@@ -9,6 +9,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { Reveal } from "@/components/motion/reveal";
+import { Spotlight } from "@/components/motion/spotlight";
 import { formatMoney, formatMoneyRange } from "@/lib/money";
 
 const creatorCard = {
@@ -24,27 +26,49 @@ const brandCard = {
   budgetMax: 1800,
 };
 
+const tickerItems = [
+  "Campaign briefs in one place",
+  "Negotiate inside the thread",
+  "Finalize one creator per campaign",
+  "Deliverables you can track",
+  "Pricing shown in ₹",
+  "Verified creators",
+  "Campaign-wise messaging",
+  "Finalized collaborations only",
+];
+
 export default function HomePage() {
   return (
     <div className="relative overflow-hidden">
       <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-28">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
+          <div
+            className="fx-rise inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm"
+          >
             <Sparkles className="size-3.5 text-primary" />
             Built for better creator–brand work
           </div>
 
-          <h1 className="mt-6 max-w-xl text-4xl leading-[1.05] font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1
+            className="fx-rise mt-6 max-w-xl text-4xl leading-[1.05] font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
+            style={{ animationDelay: "70ms" }}
+          >
             Find the right people to make your next campaign{" "}
-            <span className="text-primary">work.</span>
+            <span className="fx-shine">work.</span>
           </h1>
 
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <p
+            className="fx-rise mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg"
+            style={{ animationDelay: "150ms" }}
+          >
             Discover creators with real taste, agree on the details, and keep
             every collaboration moving — without the usual back-and-forth.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div
+            className="fx-rise mt-8 flex flex-wrap gap-3"
+            style={{ animationDelay: "230ms" }}
+          >
             <Link
               href="/signup?role=creator"
               className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground shadow-[0_10px_24px_color-mix(in_srgb,var(--primary)_22%,transparent)] transition-all hover:-translate-y-0.5 hover:bg-primary/90"
@@ -63,7 +87,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-9 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground">
+          <div
+            className="fx-rise mt-9 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground"
+            style={{ animationDelay: "310ms" }}
+          >
             <span className="inline-flex items-center gap-1.5">
               <Check className="size-3.5 text-primary" />
               Clear deliverables
@@ -82,8 +109,11 @@ export default function HomePage() {
         <div className="relative mx-auto w-full max-w-md">
           <div className="absolute -inset-10 rounded-[3rem] bg-accent/60 blur-3xl" aria-hidden />
 
-          <div className="relative space-y-4">
-            <div className="rounded-3xl border border-border bg-card p-5 shadow-[0_20px_50px_color-mix(in_srgb,var(--foreground)_10%,transparent)]">
+          <Spotlight className="relative space-y-4 rounded-3xl">
+            <div
+              className="fx-float rounded-3xl border border-border bg-card p-5 shadow-[0_20px_50px_color-mix(in_srgb,var(--foreground)_10%,transparent)]"
+              style={{ animationDelay: "-2.1s" }}
+            >
               <div className="flex items-center gap-3">
                 <div className="flex size-12 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
                   AM
@@ -128,7 +158,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="ml-6 rounded-3xl border border-primary/20 bg-primary p-5 text-primary-foreground shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_28%,transparent)] sm:ml-10">
+            <div
+              className="fx-float ml-6 rounded-3xl border border-primary/20 bg-primary p-5 text-primary-foreground shadow-[0_20px_50px_color-mix(in_srgb,var(--primary)_28%,transparent)] sm:ml-10"
+              style={{ animationDelay: "-4.6s" }}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] uppercase tracking-wide text-primary-foreground/70">
@@ -158,16 +191,37 @@ export default function HomePage() {
                 </span>
               </div>
             </div>
-          </div>
+          </Spotlight>
+        </div>
+      </section>
+
+      <section
+        aria-label="Marketplace highlights"
+        className="fx-marquee-band relative overflow-hidden border-y border-border/70 bg-card/50 py-3.5 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+      >
+        <div className="fx-marquee-track flex w-max items-center text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+          {[...tickerItems, ...tickerItems].map((item, index) => (
+            <span
+              key={`${item}-${index}`}
+              className="flex items-center gap-8 pr-8 whitespace-nowrap"
+            >
+              {item}
+              <span
+                aria-hidden
+                className="size-1 shrink-0 rounded-full bg-foreground/40"
+              />
+            </span>
+          ))}
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-5 pb-16 sm:pb-24">
         <div className="grid gap-5 md:grid-cols-2">
-          <Link
-            href="/signup?role=creator"
-            className="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
-          >
+          <Reveal>
+            <Link
+              href="/signup?role=creator"
+              className="group block h-full rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
+            >
             <span className="flex size-11 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
               <Users className="size-5" />
             </span>
@@ -185,12 +239,14 @@ export default function HomePage() {
               Explore as a creator
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </span>
-          </Link>
+            </Link>
+          </Reveal>
 
-          <Link
-            href="/signup?role=business"
-            className="group rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
-          >
+          <Reveal delay={120}>
+            <Link
+              href="/signup?role=business"
+              className="group block h-full rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_18px_40px_color-mix(in_srgb,var(--foreground)_8%,transparent)] sm:p-7"
+            >
             <span className="flex size-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
               <Briefcase className="size-5" />
             </span>
@@ -208,24 +264,27 @@ export default function HomePage() {
               Explore as a brand
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </span>
-          </Link>
+            </Link>
+          </Reveal>
         </div>
       </section>
 
       <section className="border-t border-border/70 bg-muted/30">
         <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:py-16">
-          <div className="max-w-xl">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              How it works
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Three simple steps, start to finish.
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              No spreadsheets, no endless email chains. Everything stays in one
-              place so you always know what happens next.
-            </p>
-          </div>
+          <Reveal>
+            <div className="max-w-xl">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                How it works
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+                Three simple steps, start to finish.
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                No spreadsheets, no endless email chains. Everything stays in
+                one place so you always know what happens next.
+              </p>
+            </div>
+          </Reveal>
 
           <ol className="mt-8 grid gap-4 md:grid-cols-3">
             {[
@@ -247,9 +306,11 @@ export default function HomePage() {
                 description:
                   "Agree on terms, message in the same thread, and track every deliverable until the work is done.",
               },
-            ].map((item) => (
-              <li
+            ].map((item, index) => (
+              <Reveal
+                as="li"
                 key={item.step}
+                delay={index * 110}
                 className="rounded-3xl border border-border bg-card p-6 shadow-sm"
               >
                 <span className="font-mono text-xs font-medium text-muted-foreground">
@@ -259,7 +320,7 @@ export default function HomePage() {
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {item.description}
                 </p>
-              </li>
+              </Reveal>
             ))}
           </ol>
         </div>
@@ -286,8 +347,12 @@ export default function HomePage() {
               description:
                 "Keep every conversation attached to the work itself.",
             },
-          ].map((item) => (
-            <div key={item.title} className="flex gap-3.5">
+          ].map((item, index) => (
+            <Reveal
+              key={item.title}
+              delay={index * 100}
+              className="flex gap-3.5"
+            >
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
                 <item.icon className="size-4" />
               </span>
@@ -299,7 +364,7 @@ export default function HomePage() {
                   {item.description}
                 </p>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>

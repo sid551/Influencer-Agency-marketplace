@@ -10,7 +10,7 @@ type NavLinkProps = React.ComponentProps<typeof Link> & {
 };
 
 const baseClasses =
-  "rounded-full px-3 py-2 text-sm font-medium transition-colors";
+  "rounded-full px-3 py-2 text-sm font-medium transition-all duration-300";
 const inactiveClasses =
   "text-muted-foreground hover:bg-secondary/60 hover:text-foreground";
 const activeClasses =
@@ -50,6 +50,7 @@ export function NavLink({
       fallback={
         <Link
           href={href}
+          data-slot="nav-link"
           className={cn(baseClasses, inactiveClasses, className)}
           {...props}
         >
@@ -87,6 +88,7 @@ function ActiveLink({
   return (
     <Link
       href={href}
+      data-slot="nav-link"
       aria-current={active ? "page" : undefined}
       data-active={active || undefined}
       className={cn(
