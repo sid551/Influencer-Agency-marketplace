@@ -71,18 +71,34 @@ The local allow-list is kept in `supabase/config.jsonc`.
 
 ### Google Sign-In
 
-Google uses the same `/auth/confirm` callback as email links, so no extra
-redirect URL is needed. To enable it:
+There are two different callback URLs; mixing them up causes
+`redirect_uri_mismatch`:
 
-1. Create Google OAuth credentials and add `<site-url>/auth/confirm` as an
-   authorized redirect URI (for local development:
-   `http://localhost:3000/auth/confirm`).
+- **Google → Supabase** (`redirect_uri`): register the Supabase Auth callback in
+  Google Cloud Console → **Authorized redirect URIs**. For a hosted project use
+  `https://<project-ref>.supabase.co/auth/v1/callback` (available in Supabase
+  Dashboard → Authentication → Providers → Google). For local Supabase CLI use
+  `http://127.0.0.1:54321/auth/v1/callback`. Do **not** use `/auth/confirm` here.
+- **Supabase → app** (`redirectTo`): this app uses `<site-url>/auth/confirm`,
+  the same callback as email links. It must appear in Supabase
+  **Authentication → URL Configuration → Redirect URLs**; local entries are in
+  `supabase/config.jsonc`.
+
+To enable it:
+
+1. Create a Web application OAuth client in Google Cloud Console. Add
+   `http://localhost:3000` (dev) and your production origin to **Authorized
+   JavaScript origins**, and the Supabase callback URL above to **Authorized
+   redirect URIs**. Copy the client ID and secret.
 2. Hosted Supabase: enable the Google provider in **Authentication → Providers**
    and paste the client ID/secret there. Local Supabase: set
    `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and
    `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the Supabase CLI environment and
    set `auth.external.google.enabled` to `true` in `supabase/config.jsonc`.
-3. Use **Sign up with Google** when choosing Creator or Business. The role is
+3. Make sure `NEXT_PUBLIC_SITE_URL` matches the origin you are testing and that
+   `<site-url>/auth/confirm` is allow-listed in Supabase. Add the production
+   equivalent when deploying.
+4. Use **Sign up with Google** when choosing Creator or Business. The role is
    carried through a short-lived httpOnly cookie and applied only to profiles
    created by that sign-in attempt. Existing accounts keep their current role
    and return to their role-based dashboard.

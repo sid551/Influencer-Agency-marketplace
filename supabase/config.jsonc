@@ -407,10 +407,12 @@
         // If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
         "email_optional": false
       },
-      // Google uses the app's existing /auth/confirm callback, which is
-      // already in additional_redirect_urls above. Enable after adding the
-      // OAuth client credentials. For hosted projects configure the provider
-      // in Supabase Dashboard → Authentication → Providers instead.
+      // Supabase redirects to the app's /auth/confirm URL after sign-in, which
+      // is already in additional_redirect_urls above. Register Supabase's own
+      // callback (local: http://127.0.0.1:54321/auth/v1/callback; hosted:
+      // https://<project-ref>.supabase.co/auth/v1/callback) as an authorized
+      // redirect URI in Google Cloud Console. For hosted projects configure
+      // the provider in Supabase Dashboard → Authentication → Providers.
       "google": {
         "enabled": false,
         "client_id": "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)",
