@@ -9,6 +9,12 @@ import {
   formatDate,
   formatPrice,
 } from "@/lib/business-format";
+import {
+  collaborationFilterFromValue,
+  collaborationStatusLabel,
+  collaborationStatusesForFilter,
+  SIMPLE_COLLABORATION_FILTERS,
+} from "@/lib/labels";
 import { listBusinessCollaborations } from "@/services/business-collaboration.service";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,20 +27,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CollaborationStatus } from "@/types/collaboration.types";
 import type { BusinessCollaboration } from "@/types/business.types";
 
 export const metadata = { title: "Business collaborations" };
-
-/** Only collaborations finalized by both parties appear here. */
-const LISTED_STATUSES: CollaborationStatus[] = [
-  "active",
-  "submitted",
-  "revision_requested",
-  "approved",
-  "completed",
-  "disputed",
-];
 
 /** Finalized collaborations — negotiations stay in Messages until selected. */
 export default function BusinessCollaborationsPage({
@@ -58,14 +53,15 @@ async function CollaborationsLoader({
   const { user } = await requireBusiness();
   const collaborations = await listBusinessCollaborations(user.id);
   const params = await searchParams;
-  const statusFilter = LISTED_STATUSES.includes(
-    params.status as CollaborationStatus,
-  )
-    ? (params.status as CollaborationStatus)
-    : "";
-  const filtered = statusFilter
-    ? collaborations.filter((collaboration) => collaboration.status === statusFilter)
-    : collaborations;
+  const statusFilter = collaborationFilterFromValue(params.status);
+  const matchingStatuses =
+    statusFilter === "all" ? [] : collaborationStatusesForFilter(statusFilter);
+  const filtered =
+    statusFilter === "all"
+      ? collaborations
+      : collaborations.filter((collaboration) =>
+          matchingStatuses.includes(collaboration.status),
+        );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -98,10 +94,9 @@ async function CollaborationsLoader({
                 defaultValue={statusFilter}
                 className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
               >
-                <option value="">All statuses</option>
-                {LISTED_STATUSES.map((status) => (
-                  <option key={status} value={status} className="capitalize">
-                    {status.replace(/_/g, " ")}
+                {SIMPLE_COLLABORATION_FILTERS.map((filter) => (
+                  <option key={filter.value} value={filter.value}>
+                    {filter.label}
                   </option>
                 ))}
               </select>
@@ -109,7 +104,7 @@ async function CollaborationsLoader({
             <Button type="submit" size="sm">
               Filter
             </Button>
-            {statusFilter ? (
+            {statusFilter !== "all" ? (
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/business/collaborations">Clear</Link>
               </Button>
@@ -121,7 +116,7 @@ async function CollaborationsLoader({
               <p className="max-w-lg text-sm text-muted-foreground">
                 {collaborations.length === 0
                   ? "No finalized collaborations yet. Review applications and select a creator to start working together."
-                  : "Try a different status."}
+                  : "Try a different group."}
               </p>
               {collaborations.length === 0 ? (
                 <Button asChild variant="outline" size="sm">
@@ -176,11 +171,8 @@ function CollaborationRow({
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Badge
-          variant={collaborationStatusVariant(collaboration.status)}
-          className="capitalize"
-        >
-          {collaboration.status.replace(/_/g, " ")}
+        <Badge variant={collaborationStatusVariant(collaboration.status)}>
+          {collaborationStatusLabel(collaboration.status)}
         </Badge>
         <Button asChild size="sm" variant="outline">
           <Link href={`/business/collaborations/${collaboration.id}`}>

@@ -1,12 +1,15 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ChevronRightIcon } from "lucide-react";
+import Link from "next/link";
 
 import { requireCreator } from "@/lib/auth/session";
+import { applicationStatusVariant } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
 import {
-  APPLICATION_STATUS_HELP,
+  SIMPLE_APPLICATION_STATUS_HELP,
   applicationStatusLabel,
+  simpleApplicationStatus,
 } from "@/lib/labels";
 import { listOwnApplications } from "@/services/campaign.service";
 import {
@@ -16,13 +19,12 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export const metadata = { title: "My applications" };
 
 /**
  * My applications page. Lists the signed-in creator's campaign
- * applications with their current status. Streams behind Suspense.
+ * applications with a short next step instead of a status glossary.
  */
 export default function CreatorApplicationsPage() {
   return (
@@ -53,31 +55,15 @@ function ApplicationsView({
             My applications
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track your applications and see what to do next.
+            See what needs your attention, all in one place.
           </p>
         </div>
         <Link href="/creator/discover">
           <Button variant="outline">
-            <ChevronRightIcon className="size-4 shrink-0 mr-2" /> Browse campaigns
+            <ChevronRightIcon className="mr-2 size-4 shrink-0" /> Browse campaigns
           </Button>
         </Link>
       </div>
-
-      <Card className="mt-6">
-        <CardContent className="grid gap-2 py-4 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
-          <p className="font-medium text-foreground sm:col-span-full">
-            What the statuses mean
-          </p>
-          {Object.entries(APPLICATION_STATUS_HELP).map(([status, help]) => (
-            <p key={status}>
-              <span className="font-medium text-foreground">
-                {applicationStatusLabel(status as keyof typeof APPLICATION_STATUS_HELP)}:
-              </span>{" "}
-              {help}
-            </p>
-          ))}
-        </CardContent>
-      </Card>
 
       {applications.length === 0 ? (
         <Card className="mt-6">
@@ -107,23 +93,15 @@ function ApplicationCard({
 }: {
   app: Awaited<ReturnType<typeof listOwnApplications>>[number];
 }) {
-  const statusConfig: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending: "outline",
-    accepted: "default",
-    finalized: "default",
-    rejected: "destructive",
-    withdrawn: "secondary",
-  };
-
-  const badgeVariant = statusConfig[app.status] ?? "secondary";
-  const inConversation = app.status === "accepted" || app.status === "finalized";
+  const group = simpleApplicationStatus(app.status);
+  const inConversation = group === "in_talks" || group === "selected";
 
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-0">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <div className="flex shrink-0 items-center justify-center size-10 rounded-full bg-muted">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
               <span className="text-sm font-medium">
                 {app.campaign?.title.charAt(0) ?? "C"}
               </span>
@@ -135,22 +113,32 @@ function ApplicationCard({
               >
                 {app.campaign?.title ?? "Campaign"}
               </Link>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="truncate text-xs text-muted-foreground">
                 {app.campaign?.category ?? ""}
-                {app.campaign?.application_deadline && (
-                  <span className="ml-2">· deadline {new Date(app.campaign.application_deadline).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-                )}
+                {app.campaign?.application_deadline ? (
+                  <span className="ml-2">
+                    · deadline{" "}
+                    {new Date(app.campaign.application_deadline).toLocaleDateString(
+                      undefined,
+                      { month: "short", day: "numeric" },
+                    )}
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>
-          <Badge variant={badgeVariant} className="text-xs">
+          <Badge variant={applicationStatusVariant(app.status)} className="text-xs">
             {applicationStatusLabel(app.status)}
           </Badge>
         </div>
+        <p className="border-t px-4 py-2 text-xs text-muted-foreground">
+          {SIMPLE_APPLICATION_STATUS_HELP[group]}
+        </p>
       </CardContent>
-      <CardFooter className="border-t px-4 py-3 flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">
-          {app.proposal.slice(0, 100)}{app.proposal.length > 100 ? "…" : ""}
+      <CardFooter className="flex items-center justify-between border-t px-4 py-3 text-xs">
+        <span className="truncate text-muted-foreground">
+          {app.proposal.slice(0, 100)}
+          {app.proposal.length > 100 ? "…" : ""}
         </span>
         <span className="flex items-center gap-3">
           <span className="text-muted-foreground">
@@ -176,7 +164,7 @@ function ApplicationsSkeleton() {
       <div className="h-8 w-32 animate-pulse rounded-xl bg-muted" />
       <div className="mt-8 grid gap-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="h-24 rounded-2xl animate-pulse" />
+          <Card key={i} className="h-24 animate-pulse rounded-2xl" />
         ))}
       </div>
     </div>

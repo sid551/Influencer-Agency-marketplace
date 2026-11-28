@@ -5,6 +5,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { collaborationStatusVariant } from "@/lib/business-format";
+import {
+  collaborationStatusLabel,
+  simpleApplicationStatus,
+} from "@/lib/labels";
 import {
   getBusinessConversation,
   listMessages,
@@ -73,7 +78,7 @@ function ThreadView({
     detail.collaboration.creator?.username ??
     "Creator";
   const campaignTitle = detail.collaboration.campaign?.title;
-  const status = detail.collaboration.status.replace(/_/g, " ");
+  const status = collaborationStatusLabel(detail.collaboration.status);
   const canNegotiate = ["negotiating", "agreement_pending"].includes(
     detail.collaboration.status,
   );
@@ -81,9 +86,9 @@ function ThreadView({
     detail.collaboration.applicationId !== null &&
     detail.collaboration.applicationStatus === "accepted";
   const backStatus =
-    detail.collaboration.applicationStatus === "finalized"
-      ? "finalized"
-      : "accepted";
+    detail.collaboration.applicationStatus
+      ? simpleApplicationStatus(detail.collaboration.applicationStatus)
+      : "all";
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
@@ -105,7 +110,10 @@ function ThreadView({
             {campaignTitle ? `${campaignTitle} · ` : ""}{status}
           </p>
         </div>
-        <Badge variant="outline" className="text-xs capitalize">
+        <Badge
+          variant={collaborationStatusVariant(detail.collaboration.status)}
+          className="text-xs"
+        >
           {status}
         </Badge>
       </div>

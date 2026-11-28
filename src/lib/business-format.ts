@@ -1,5 +1,10 @@
 import { formatMoney } from "@/lib/money";
-import type { ApplicationStatus } from "@/types/campaign.types";
+import {
+  simpleApplicationStatus,
+  simpleCampaignStatus,
+  simpleCollaborationStatus,
+} from "@/lib/labels";
+import type { ApplicationStatus, CampaignStatus } from "@/types/campaign.types";
 import type { CollaborationStatus } from "@/types/collaboration.types";
 
 export type BadgeVariant =
@@ -8,22 +13,44 @@ export type BadgeVariant =
   | "destructive"
   | "outline";
 
-/** Shared badge styling for application statuses in the business area. */
+/** Shared badge styling for application statuses. */
 export function applicationStatusVariant(status: ApplicationStatus): BadgeVariant {
-  if (status === "accepted" || status === "finalized") {
-    return "default";
+  switch (simpleApplicationStatus(status)) {
+    case "new":
+      return "default";
+    case "in_talks":
+      return "secondary";
+    case "selected":
+      return "default";
+    default:
+      return "outline";
   }
-  if (status === "rejected") return "destructive";
-  if (status === "withdrawn") return "secondary";
-  return "outline";
 }
 
-/** Shared badge styling for collaboration statuses in the business area. */
+/** Shared badge styling for campaign statuses. */
+export function campaignStatusVariant(status: CampaignStatus): BadgeVariant {
+  switch (simpleCampaignStatus(status)) {
+    case "live":
+      return "default";
+    case "draft":
+      return "outline";
+    default:
+      return "secondary";
+  }
+}
+
+/** Shared badge styling for collaboration statuses. */
 export function collaborationStatusVariant(status: CollaborationStatus): BadgeVariant {
-  if (status === "active" || status === "approved") return "default";
-  if (status === "completed") return "secondary";
-  if (status === "cancelled" || status === "disputed") return "destructive";
-  return "outline";
+  switch (simpleCollaborationStatus(status)) {
+    case "needs_attention":
+      return "destructive";
+    case "in_progress":
+      return "default";
+    case "done":
+      return "secondary";
+    default:
+      return "outline";
+  }
 }
 
 /** Collaboration dates are stored as ISO timestamps or YYYY-MM-DD strings. */

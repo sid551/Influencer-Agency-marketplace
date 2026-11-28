@@ -55,25 +55,33 @@ function useActionToast(state: FormActionState) {
 }
 
 const STATUS_LABELS: Record<CollaborationStatus, string> = {
-  negotiating: "Back to negotiating",
-  agreement_pending: "Send agreement to creator",
-  active: "Start collaboration",
-  submitted: "Mark work as submitted",
+  negotiating: "Back to discussing",
+  agreement_pending: "Send agreement",
+  active: "Start work",
+  submitted: "Mark work received",
   revision_requested: "Request changes",
   approved: "Approve work",
-  completed: "Mark as complete",
+  completed: "Finish",
   cancelled: "Cancel collaboration",
-  disputed: "Report a dispute",
+  disputed: "Report a problem",
+};
+
+/** The next step shown as the primary action for each collaboration state. */
+const PRIMARY_NEXT: Partial<Record<CollaborationStatus, CollaborationStatus>> = {
+  negotiating: "agreement_pending",
+  agreement_pending: "active",
+  submitted: "approved",
+  approved: "completed",
 };
 
 const CONFIRM_MESSAGES: Partial<Record<CollaborationStatus, string>> = {
-  completed: "Mark this collaboration as complete? All work should be delivered first.",
+  completed: "Finish this collaboration? All work should be delivered first.",
   cancelled: "Cancel this collaboration? Both sides will be notified.",
-  disputed: "Report a dispute? Work will pause until it's resolved.",
+  disputed: "Report a problem? Work will pause until it's resolved.",
 };
 
-/** Only shows transitions the business may request. Collaboration approval
- *  stays hidden until every submitted deliverable has been approved. */
+/** Shows one clear next step; collaboration approval stays hidden until every
+ *  submitted deliverable has been approved. */
 export function BusinessCollaborationStatusActions({
   collaborationId,
   status,
@@ -88,21 +96,45 @@ export function BusinessCollaborationStatusActions({
   );
   if (transitions.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No further actions are available for this collaboration.
-      </p>
+      <p className="text-sm text-muted-foreground">Nothing else is needed here.</p>
     );
   }
 
+  const primary = PRIMARY_NEXT[status];
+  const primaryNext = primary && transitions.includes(primary) ? primary : null;
+  const secondary = transitions.filter((next) => next !== primaryNext);
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {transitions.map((next) => (
+    <div className="grid gap-3">
+      {primaryNext ? (
         <StatusButton
-          key={next}
           collaborationId={collaborationId}
-          next={next}
+          next={primaryNext}
+          label={STATUS_LABELS[primaryNext]}
         />
-      ))}
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Waiting for the creator&apos;s next update.
+        </p>
+      )}
+      {secondary.length ? (
+        <details className="text-xs text-muted-foreground">
+          <summary className="w-fit cursor-pointer hover:text-foreground">
+            More options
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {secondary.map((next) => (
+              <StatusButton
+                key={next}
+                collaborationId={collaborationId}
+                next={next}
+                label={STATUS_LABELS[next]}
+                variant={next === "disputed" || next === "cancelled" ? "destructive" : "ghost"}
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -110,9 +142,13 @@ export function BusinessCollaborationStatusActions({
 function StatusButton({
   collaborationId,
   next,
+  label,
+  variant = "default",
 }: {
   collaborationId: string;
   next: CollaborationStatus;
+  label: string;
+  variant?: "default" | "ghost" | "destructive";
 }) {
   const [state, formAction, isPending] = useActionState(
     updateBusinessCollaborationStatusAction.bind(null, collaborationId, next),
@@ -120,7 +156,6 @@ function StatusButton({
   );
   useActionToast(state);
 
-  const destructive = next === "cancelled" || next === "disputed";
   return (
     <form
       action={formAction}
@@ -129,14 +164,9 @@ function StatusButton({
         if (message && !window.confirm(message)) event.preventDefault();
       }}
     >
-      <Button
-        type="submit"
-        size="sm"
-        variant={destructive ? "outline" : "default"}
-        disabled={isPending}
-      >
+      <Button type="submit" size="sm" variant={variant} disabled={isPending}>
         {isPending ? <Loader2Icon className="size-4 animate-spin" /> : null}
-        {STATUS_LABELS[next]}
+        {label}
       </Button>
     </form>
   );

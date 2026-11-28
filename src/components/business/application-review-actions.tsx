@@ -14,8 +14,8 @@ import {
 import { EMPTY_FORM_STATE } from "@/types/action-state.types";
 
 const DECISION_LABELS: Record<BusinessApplicationDecision, string> = {
-  accepted: "Start negotiating",
-  finalized: "Select this creator",
+  accepted: "Message creator",
+  finalized: "Select creator",
   rejected: "Decline",
 };
 
@@ -25,7 +25,15 @@ const CONFIRM_MESSAGES: Partial<Record<BusinessApplicationDecision, string>> = {
   rejected: "Decline this application? The creator will be notified.",
 };
 
-/** Only shows decisions allowed by the current application status. */
+/** The one decision a business should focus on for each application. */
+const PRIMARY_DECISION: Partial<
+  Record<ApplicationStatus, BusinessApplicationDecision>
+> = {
+  pending: "accepted",
+  accepted: "finalized",
+};
+
+/** Shows one primary next step, with decline kept as a quiet secondary action. */
 export function ApplicationReviewActions({
   applicationId,
   status,
@@ -34,30 +42,39 @@ export function ApplicationReviewActions({
   status: ApplicationStatus;
 }) {
   const decisions = BUSINESS_APPLICATION_TRANSITIONS[status];
+  const primary = PRIMARY_DECISION[status];
+  const secondary = decisions.find((decision) => decision === "rejected");
 
-  if (decisions.length === 0) {
+  if (!primary && !secondary) {
     return (
       <p className="text-sm text-muted-foreground">
-        This application is closed — no further action is needed.
+        Nothing else is needed for this application.
       </p>
     );
   }
 
   return (
     <div className="grid gap-2">
-      <div className="flex flex-wrap gap-2">
-        {decisions.map((decision) => (
+      <div className="flex flex-wrap items-center gap-2">
+        {primary ? (
           <ApplicationDecisionButton
-            key={decision}
             applicationId={applicationId}
-            decision={decision}
+            decision={primary}
+            size="default"
           />
-        ))}
+        ) : null}
+        {secondary ? (
+          <ApplicationDecisionButton
+            applicationId={applicationId}
+            decision={secondary}
+            variant="ghost"
+          />
+        ) : null}
       </div>
-      {decisions.includes("finalized") ? (
+      {primary === "finalized" ? (
         <p className="text-xs text-muted-foreground">
-          Selecting a creator automatically declines other accepted creators.
-          Message them first if you still need to agree on terms.
+          This closes the other conversations for the campaign. Message the
+          creator first if terms are not agreed yet.
         </p>
       ) : null}
     </div>
@@ -68,10 +85,12 @@ export function ApplicationDecisionButton({
   applicationId,
   decision,
   size = "sm",
+  variant,
 }: {
   applicationId: string;
   decision: BusinessApplicationDecision;
   size?: "sm" | "default";
+  variant?: "default" | "ghost";
 }) {
   const [state, formAction, pending] = useActionState(
     reviewApplicationAction.bind(null, applicationId, decision),
@@ -95,11 +114,7 @@ export function ApplicationDecisionButton({
       <Button
         type="submit"
         size={size}
-        variant={
-          decision === "accepted" || decision === "finalized"
-            ? "default"
-            : "outline"
-        }
+        variant={variant ?? (decision === "rejected" ? "ghost" : "default")}
         disabled={pending}
       >
         {pending ? <Loader2Icon className="animate-spin" /> : null}

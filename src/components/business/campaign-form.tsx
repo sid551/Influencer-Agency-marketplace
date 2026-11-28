@@ -13,7 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { CampaignFormDefaults } from "@/lib/campaign-form-defaults";
-import { label } from "@/lib/labels";
+import {
+  SIMPLE_CAMPAIGN_STATUS_HELP,
+  SIMPLE_CAMPAIGN_STATUSES,
+  campaignStatusValueForChoice,
+  label,
+  simpleCampaignStatus,
+  simpleCampaignStatusLabel,
+  type SimpleCampaignStatus,
+} from "@/lib/labels";
 import {
   CAMPAIGN_IMAGE_ACCEPT,
   CAMPAIGN_IMAGE_ALT_MAX,
@@ -21,10 +29,7 @@ import {
 } from "@/lib/validations/campaign-image";
 import { CAMPAIGN_PLATFORMS } from "@/lib/validations/business";
 import { NICHE_OPTIONS } from "@/types/creator.types";
-import {
-  CAMPAIGN_STATUSES,
-  COLLABORATION_TYPES,
-} from "@/types/campaign.types";
+import { COLLABORATION_TYPES } from "@/types/campaign.types";
 import {
   EMPTY_FORM_STATE,
   type FormActionState,
@@ -47,6 +52,9 @@ export function CampaignForm({
     defaultValues.image_url,
   );
   const [removeImage, setRemoveImage] = useState(false);
+  const [statusChoice, setStatusChoice] = useState<SimpleCampaignStatus>(
+    simpleCampaignStatus(defaultValues.status),
+  );
 
   useEffect(() => {
     if (!previewUrl?.startsWith("blob:")) return;
@@ -225,15 +233,36 @@ export function CampaignForm({
           <FieldError messages={state.fieldErrors.collaboration_type} />
         </div>
         <div className="grid gap-2">
-          <label htmlFor="status" className="text-sm font-medium">Status</label>
-          <select id="status" name="status" className={selectClass} defaultValue={defaultValues.status}>
-            {(editing ? CAMPAIGN_STATUSES : (["draft", "published"] as const)).map((status) => (
-              <option key={status} value={status}>{label(status)}</option>
+          <label htmlFor="status" className="text-sm font-medium">Campaign state</label>
+          <select
+            id="status"
+            name="status_choice"
+            className={selectClass}
+            value={statusChoice}
+            onChange={(event) =>
+              setStatusChoice(event.target.value as SimpleCampaignStatus)
+            }
+          >
+            {(editing
+              ? SIMPLE_CAMPAIGN_STATUSES
+              : (["draft", "live"] as const)
+            ).map((status) => (
+              <option key={status} value={status}>
+                {simpleCampaignStatusLabel(status)}
+              </option>
             ))}
           </select>
+          <input
+            type="hidden"
+            name="status"
+            value={campaignStatusValueForChoice(
+              statusChoice,
+              defaultValues.status,
+            )}
+            readOnly
+          />
           <p className="text-xs text-muted-foreground">
-            Draft: only you can see it. Open for applications: creators can
-            find and apply. You can publish later by editing the campaign.
+            {SIMPLE_CAMPAIGN_STATUS_HELP[statusChoice]}
           </p>
           <FieldError messages={state.fieldErrors.status} />
         </div>

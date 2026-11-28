@@ -4,12 +4,14 @@ import { connection } from "next/server";
 import { ArrowRightIcon, CalendarDaysIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
+import { collaborationStatusVariant } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
+import {
+  collaborationStatusHelp,
+  collaborationStatusLabel,
+} from "@/lib/labels";
 import { listOwnCollaborations } from "@/services/collaboration.service";
-import type {
-  CollaborationListItem,
-  CollaborationStatus,
-} from "@/types/collaboration.types";
+import type { CollaborationListItem } from "@/types/collaboration.types";
 import { OpenConversationButton } from "./collaboration-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,33 +38,6 @@ async function CollaborationsLoader() {
   const collaborations = await listOwnCollaborations(user.id);
 
   return <CollaborationsView collaborations={collaborations} />;
-}
-
-const STATUS_BADGES: Record<
-  CollaborationStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  negotiating: { label: "Negotiating", variant: "outline" },
-  agreement_pending: { label: "Agreement pending", variant: "secondary" },
-  active: { label: "Active", variant: "default" },
-  submitted: { label: "Submitted", variant: "secondary" },
-  revision_requested: { label: "Revision requested", variant: "outline" },
-  approved: { label: "Approved", variant: "default" },
-  completed: { label: "Completed", variant: "secondary" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
-  disputed: { label: "Disputed", variant: "destructive" },
-};
-
-function statusBadge(status: CollaborationStatus) {
-  const config = STATUS_BADGES[status] ?? {
-    label: status,
-    variant: "outline" as const,
-  };
-  return (
-    <Badge variant={config.variant} className="text-xs">
-      {config.label}
-    </Badge>
-  );
 }
 
 function formatDate(value: string | null) {
@@ -107,7 +82,12 @@ function CollaborationsView({
                       <p className="text-base font-medium">
                         {collaboration.campaign?.title ?? "Collaboration"}
                       </p>
-                      {statusBadge(collaboration.status)}
+                      <Badge
+                        variant={collaborationStatusVariant(collaboration.status)}
+                        className="text-xs"
+                      >
+                        {collaborationStatusLabel(collaboration.status)}
+                      </Badge>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {collaboration.business?.company_name ?? "Business"}
@@ -121,6 +101,9 @@ function CollaborationsView({
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <CalendarDaysIcon className="size-3.5" />
                       Due {formatDate(collaboration.deadline)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {collaborationStatusHelp(collaboration.status)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -5,12 +5,16 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon, CalendarDaysIcon, MessageSquareIcon } from "lucide-react";
 
 import { requireCreator } from "@/lib/auth/session";
+import { collaborationStatusVariant } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
-import { COLLABORATION_STATUS_HELP, label } from "@/lib/labels";
+import {
+  collaborationStatusHelp,
+  collaborationStatusLabel,
+  deliverableStatusLabel,
+} from "@/lib/labels";
 import { getCollaborationForCreator } from "@/services/collaboration.service";
 import type {
   CollaborationDetail,
-  CollaborationStatus,
   Deliverable,
 } from "@/types/collaboration.types";
 import {
@@ -55,21 +59,6 @@ async function DetailLoader({ params }: { params: Promise<{ id: string }> }) {
   return <DetailView collaboration={collaboration} />;
 }
 
-const STATUS_BADGES: Record<
-  CollaborationStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  negotiating: { label: "Negotiating", variant: "outline" },
-  agreement_pending: { label: "Agreement pending", variant: "secondary" },
-  active: { label: "Active", variant: "default" },
-  submitted: { label: "Submitted", variant: "secondary" },
-  revision_requested: { label: "Revision requested", variant: "outline" },
-  approved: { label: "Approved", variant: "default" },
-  completed: { label: "Completed", variant: "secondary" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
-  disputed: { label: "Disputed", variant: "destructive" },
-};
-
 function formatDate(value: string | null) {
   if (!value) return "Not set";
   return new Date(value).toLocaleDateString(undefined, {
@@ -80,10 +69,6 @@ function formatDate(value: string | null) {
 }
 
 function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
-  const badge = STATUS_BADGES[collaboration.status] ?? {
-    label: collaboration.status,
-    variant: "outline" as const,
-  };
   const canEditTerms =
     collaboration.status === "negotiating" ||
     collaboration.status === "agreement_pending";
@@ -108,7 +93,9 @@ function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
                 <CardTitle>
                   {collaboration.campaign?.title ?? "Collaboration"}
                 </CardTitle>
-                <Badge variant={badge.variant}>{badge.label}</Badge>
+                <Badge variant={collaborationStatusVariant(collaboration.status)}>
+                  {collaborationStatusLabel(collaboration.status)}
+                </Badge>
               </div>
               <CardDescription>
                 with {collaboration.business?.company_name ?? "a business"}
@@ -169,7 +156,7 @@ function DetailView({ collaboration }: { collaboration: CollaborationDetail }) {
             <CardHeader>
               <CardTitle>Next steps</CardTitle>
               <CardDescription>
-                {COLLABORATION_STATUS_HELP[collaboration.status]}
+                {collaborationStatusHelp(collaboration.status)}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -235,7 +222,7 @@ function DeliverableRow({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{deliverable.title}</p>
         <Badge variant={deliverable.status === "approved" ? "default" : "outline"} className="text-xs">
-          {label(deliverable.status)}
+          {deliverableStatusLabel(deliverable.status)}
         </Badge>
       </div>
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

@@ -11,8 +11,9 @@ import {
   formatPrice,
 } from "@/lib/business-format";
 import {
-  COLLABORATION_STATUS_HELP,
-  label,
+  collaborationStatusHelp,
+  collaborationStatusLabel,
+  deliverableStatusLabel,
 } from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import { getBusinessCollaboration } from "@/services/business-collaboration.service";
@@ -96,9 +97,8 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
                 </CardTitle>
                 <Badge
                   variant={collaborationStatusVariant(collaboration.status)}
-                  className="capitalize"
                 >
-                  {label(collaboration.status)}
+                  {collaborationStatusLabel(collaboration.status)}
                 </Badge>
               </div>
               <CardDescription>with {creatorName}</CardDescription>
@@ -189,7 +189,7 @@ function DetailView({ collaboration }: { collaboration: BusinessCollaboration })
             <CardHeader>
               <CardTitle>Next steps</CardTitle>
               <CardDescription>
-                {COLLABORATION_STATUS_HELP[collaboration.status]}
+                {collaborationStatusHelp(collaboration.status)}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -279,7 +279,7 @@ function DeliverableRow({
           variant={deliverable.status === "approved" ? "default" : "outline"}
           className="text-xs capitalize"
         >
-          {label(deliverable.status)}
+          {deliverableStatusLabel(deliverable.status)}
         </Badge>
       </div>
       <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import { formatUtcTimestamp } from "@/lib/labels";
+import { friendlyStatusBody, formatUtcTimestamp } from "@/lib/labels";
 import {
   deleteNotificationAction,
   markAllNotificationsReadAction,
@@ -220,6 +220,7 @@ export function NotificationList({
           {visible.map((notification) => {
             const Icon = TYPE_ICONS[notification.type] ?? BellIcon;
             const unread = notification.read_at === null;
+            const body = friendlyStatusBody(notification.body);
             const summary = (
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -235,9 +236,9 @@ export function NotificationList({
                     </span>
                   </div>
                   <p className="mt-0.5 text-sm font-medium">{notification.title}</p>
-                  {notification.body ? (
+                  {body ? (
                     <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-muted-foreground">
-                      {notification.body}
+                      {body}
                     </p>
                   ) : null}
                 </div>

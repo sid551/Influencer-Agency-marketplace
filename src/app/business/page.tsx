@@ -4,6 +4,8 @@ import { connection } from "next/server";
 import { ArrowRightIcon, PlusIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignStatusVariant } from "@/lib/business-format";
+import { campaignStatusLabel } from "@/lib/labels";
 import {
   listBusinessCampaignApplicationGroups,
 } from "@/services/business-application.service";
@@ -199,8 +201,8 @@ function CampaignApplicationGroup({
           <Badge variant="secondary" className="text-xs">
             {applicationCount}
           </Badge>
-          <Badge variant="outline" className="text-xs capitalize">
-            {campaign.status}
+          <Badge variant={campaignStatusVariant(campaign.status)} className="text-xs">
+            {campaignStatusLabel(campaign.status)}
           </Badge>
         </div>
       </div>

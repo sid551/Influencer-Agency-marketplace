@@ -9,7 +9,8 @@ import {
   listBusinessCampaigns,
 } from "@/services/business-campaign.service";
 import { getOwnBusinessProfile } from "@/services/business-profile.service";
-import { label } from "@/lib/labels";
+import { campaignStatusVariant } from "@/lib/business-format";
+import { campaignStatusLabel } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,10 +111,12 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <Badge variant="outline">{label(campaign.status)}</Badge>
+        <Badge variant={campaignStatusVariant(campaign.status)}>
+          {campaignStatusLabel(campaign.status)}
+        </Badge>
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/business/campaigns/${campaign.id}/applications`}>
-            Applications
+            Review
           </Link>
         </Button>
         <Button variant="ghost" size="sm" asChild>

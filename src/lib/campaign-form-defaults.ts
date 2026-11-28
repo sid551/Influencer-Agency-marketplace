@@ -1,5 +1,5 @@
 import { DEFAULT_CURRENCY } from "@/lib/money";
-import type { Campaign } from "@/types/campaign.types";
+import type { Campaign, CampaignStatus } from "@/types/campaign.types";
 
 /** Plain form values shared by the server pages and the client campaign form. */
 export interface CampaignFormDefaults {
@@ -19,7 +19,7 @@ export interface CampaignFormDefaults {
   image_url: string | null;
   image_public_id: string | null;
   image_alt: string;
-  status: string;
+  status: CampaignStatus;
 }
 
 export function campaignFormDefaults(

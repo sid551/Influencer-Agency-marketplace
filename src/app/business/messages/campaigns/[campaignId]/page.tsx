@@ -7,7 +7,11 @@ import { ArrowLeftIcon, MessageSquareIcon } from "lucide-react";
 import { requireBusiness } from "@/lib/auth/session";
 import { applicationStatusVariant, formatDate } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
-import { applicationStatusLabel } from "@/lib/labels";
+import {
+  applicationConversationFilterFromValue,
+  applicationStatusLabel,
+  SIMPLE_APPLICATION_FILTERS,
+} from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
   getBusinessCampaign,
@@ -19,7 +23,6 @@ import type {
   BusinessCampaignApplicantThread,
 } from "@/types/business.types";
 import {
-  APPLICATION_STATUSES,
   MESSAGEABLE_APPLICATION_STATUSES,
   type ApplicationStatus,
 } from "@/types/campaign.types";
@@ -63,7 +66,7 @@ async function CampaignMessagesLoader({
   const campaign = await getBusinessCampaign(user.id, campaignId);
   if (!campaign) notFound();
 
-  const status = parseStatus(query.status);
+  const status = applicationConversationFilterFromValue(query.status);
   const applicants = await listCampaignApplicantConversations(
     user.id,
     campaignId,
@@ -80,20 +83,9 @@ async function CampaignMessagesLoader({
   );
 }
 
-function parseStatus(value: string | undefined): ApplicationStatus | "all" {
-  if (value === "all") return "all";
-  if (APPLICATION_STATUSES.includes(value as ApplicationStatus)) {
-    return value as ApplicationStatus;
-  }
-  return "accepted";
-}
-
-const FILTERS: Array<{ value: ApplicationStatus | "all"; label: string }> = [
-  { value: "accepted", label: "In negotiation" },
-  { value: "finalized", label: "Selected" },
-  { value: "all", label: "All applicants" },
-  { value: "pending", label: "Pending review" },
-];
+const FILTERS = SIMPLE_APPLICATION_FILTERS.filter(
+  (filter) => filter.value !== "closed",
+);
 
 function CampaignMessagesView({
   campaignId,
@@ -118,8 +110,8 @@ function CampaignMessagesView({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{campaignTitle}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Creators who applied to this campaign. Accepted creators have a
-          message thread.
+          Creators who applied to this campaign. Open a conversation when you
+          are ready to work together.
         </p>
       </div>
 
@@ -145,10 +137,12 @@ function CampaignMessagesView({
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center text-sm text-muted-foreground">
             <p>
               {status === "accepted"
-                ? "No creators are in negotiation for this campaign yet."
+                ? "No creators are in talks for this campaign yet."
                 : status === "pending"
-                  ? "No applications are waiting for review."
-                  : "No applicants with this status."}
+                  ? "No new applications are waiting for review."
+                  : status === "finalized"
+                    ? "No creators have been selected yet."
+                    : "No applicants in this group."}
             </p>
             <Button asChild variant="outline" size="sm">
               <Link

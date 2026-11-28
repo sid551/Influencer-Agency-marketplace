@@ -7,18 +7,22 @@ import { ArrowLeftIcon, MessagesSquareIcon, PencilIcon } from "lucide-react";
 import { requireBusiness } from "@/lib/auth/session";
 import {
   applicationStatusVariant,
+  campaignStatusVariant,
   formatPrice,
 } from "@/lib/business-format";
-import { applicationStatusLabel } from "@/lib/labels";
+import {
+  applicationFilterFromValue,
+  applicationStatusLabel,
+  applicationStatusesForFilter,
+  campaignStatusLabel,
+  SIMPLE_APPLICATION_FILTERS,
+  simpleApplicationStatus,
+} from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import {
   listBusinessCampaignApplications,
 } from "@/services/business-application.service";
 import { getBusinessCampaign } from "@/services/business-campaign.service";
-import {
-  APPLICATION_STATUSES,
-  type ApplicationStatus,
-} from "@/types/campaign.types";
 import type { BusinessApplication } from "@/types/business.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,14 +75,15 @@ async function CampaignApplicationsLoader({
   ]);
   if (!campaign) notFound();
 
-  const statusFilter = APPLICATION_STATUSES.includes(
-    query.status as ApplicationStatus,
-  )
-    ? (query.status as ApplicationStatus)
-    : "";
-  const filtered = statusFilter
-    ? applications.filter((application) => application.status === statusFilter)
-    : applications;
+  const statusFilter = applicationFilterFromValue(query.status);
+  const matchingStatuses =
+    statusFilter === "all" ? [] : applicationStatusesForFilter(statusFilter);
+  const filtered =
+    statusFilter === "all"
+      ? applications
+      : applications.filter((application) =>
+          matchingStatuses.includes(application.status),
+        );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -95,8 +100,8 @@ async function CampaignApplicationsLoader({
             <h1 className="text-2xl font-semibold tracking-tight">
               {campaign.title}
             </h1>
-            <Badge variant="outline" className="capitalize">
-              {campaign.status}
+            <Badge variant={campaignStatusVariant(campaign.status)}>
+              {campaignStatusLabel(campaign.status)}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -142,16 +147,15 @@ async function CampaignApplicationsLoader({
                   defaultValue={statusFilter}
                   className="h-9 rounded-xl border border-input bg-card/80 px-3 text-sm"
                 >
-                  <option value="">All statuses</option>
-                  {APPLICATION_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {applicationStatusLabel(status)}
+                  {SIMPLE_APPLICATION_FILTERS.map((filter) => (
+                    <option key={filter.value} value={filter.value}>
+                      {filter.label}
                     </option>
                   ))}
                 </select>
               </div>
               <Button type="submit" size="sm">Filter</Button>
-              {statusFilter ? (
+              {statusFilter !== "all" ? (
                 <Button variant="ghost" size="sm" asChild>
                   <Link href={`/business/campaigns/${campaign.id}/applications`}>
                     Clear
@@ -185,6 +189,8 @@ function ApplicationRow({ application }: { application: BusinessApplication }) {
     application.creator?.full_name ??
     application.creator?.username ??
     "Creator";
+  const group = simpleApplicationStatus(application.status);
+  const inConversation = group === "in_talks" || group === "selected";
 
   return (
     <li className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -204,12 +210,22 @@ function ApplicationRow({ application }: { application: BusinessApplication }) {
           {application.proposal}
         </p>
       </div>
-      <Badge
-        variant={applicationStatusVariant(application.status)}
-        className="w-fit"
-      >
-        {applicationStatusLabel(application.status)}
-      </Badge>
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <Badge variant={applicationStatusVariant(application.status)}>
+          {applicationStatusLabel(application.status)}
+        </Badge>
+        <Button size="sm" variant={group === "closed" ? "outline" : "default"} asChild>
+          <Link
+            href={
+              inConversation
+                ? `/business/messages/campaigns/${application.campaign_id}`
+                : `/business/applications/${application.id}`
+            }
+          >
+            {inConversation ? "Open chat" : group === "new" ? "Review" : "View"}
+          </Link>
+        </Button>
+      </div>
     </li>
   );
 }
