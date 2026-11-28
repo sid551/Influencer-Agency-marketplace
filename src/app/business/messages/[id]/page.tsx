@@ -5,6 +5,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignMessagesPath, campaignSlug } from "@/lib/campaign-paths";
+import { collaborationStatusVariant } from "@/lib/business-format";
+import {
+  collaborationStatusLabel,
+  simpleApplicationStatus,
+} from "@/lib/labels";
 import {
   getBusinessConversation,
   listMessages,
@@ -45,14 +51,16 @@ async function ThreadLoader({ params }: { params: Promise<{ id: string }> }) {
   if (!detail) notFound();
 
   const messages = await listMessages(id);
-  const campaignId = detail.collaboration.campaign?.id ?? null;
+  const campaignRef = detail.collaboration.campaign
+    ? campaignSlug(detail.collaboration.campaign)
+    : null;
 
   return (
     <ThreadView
       detail={detail}
       messages={messages}
       currentUserId={user.id}
-      campaignId={campaignId}
+      campaignRef={campaignRef}
     />
   );
 }
@@ -61,19 +69,19 @@ function ThreadView({
   detail,
   messages,
   currentUserId,
-  campaignId,
+  campaignRef,
 }: {
   detail: NonNullable<Awaited<ReturnType<typeof getBusinessConversation>>>;
   messages: Awaited<ReturnType<typeof listMessages>>;
   currentUserId: string;
-  campaignId: string | null;
+  campaignRef: string | null;
 }) {
   const creatorName =
     detail.collaboration.creator?.full_name ??
     detail.collaboration.creator?.username ??
     "Creator";
   const campaignTitle = detail.collaboration.campaign?.title;
-  const status = detail.collaboration.status.replace(/_/g, " ");
+  const status = collaborationStatusLabel(detail.collaboration.status);
   const canNegotiate = ["negotiating", "agreement_pending"].includes(
     detail.collaboration.status,
   );
@@ -81,16 +89,16 @@ function ThreadView({
     detail.collaboration.applicationId !== null &&
     detail.collaboration.applicationStatus === "accepted";
   const backStatus =
-    detail.collaboration.applicationStatus === "finalized"
-      ? "finalized"
-      : "accepted";
+    detail.collaboration.applicationStatus
+      ? simpleApplicationStatus(detail.collaboration.applicationStatus)
+      : "all";
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
         href={
-          campaignId
-            ? `/business/messages/campaigns/${campaignId}?status=${backStatus}`
+          campaignRef
+            ? `${campaignMessagesPath({ id: campaignRef })}?status=${backStatus}`
             : "/business/messages"
         }
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
@@ -105,7 +113,10 @@ function ThreadView({
             {campaignTitle ? `${campaignTitle} · ` : ""}{status}
           </p>
         </div>
-        <Badge variant="outline" className="text-xs capitalize">
+        <Badge
+          variant={collaborationStatusVariant(detail.collaboration.status)}
+          className="text-xs"
+        >
           {status}
         </Badge>
       </div>
@@ -129,8 +140,8 @@ function ThreadView({
           <CardHeader>
             <CardTitle>Finish the selection</CardTitle>
             <CardDescription>
-              Finalizing agrees the price and declines the other accepted
-              creators for this campaign.
+              Finalizing agrees the price and selects this creator. Other
+              creators stay available for this campaign.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">

@@ -1,5 +1,5 @@
 import { DEFAULT_CURRENCY } from "@/lib/money";
-import type { Campaign } from "@/types/campaign.types";
+import type { Campaign, CampaignStatus } from "@/types/campaign.types";
 
 /** Plain form values shared by the server pages and the client campaign form. */
 export interface CampaignFormDefaults {
@@ -16,7 +16,10 @@ export interface CampaignFormDefaults {
   deliverables: string;
   application_deadline: string;
   location: string;
-  status: string;
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string;
+  status: CampaignStatus;
 }
 
 export function campaignFormDefaults(
@@ -37,6 +40,9 @@ export function campaignFormDefaults(
     deliverables: campaign?.deliverables.join("\n") ?? "",
     application_deadline: campaign?.application_deadline?.slice(0, 10) ?? "",
     location: campaign?.location ?? "",
+    image_url: campaign?.image_url ?? null,
+    image_public_id: campaign?.image_public_id ?? null,
+    image_alt: campaign?.image_alt ?? "",
     status: campaign?.status ?? "draft",
   };
 }

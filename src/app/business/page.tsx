@@ -4,6 +4,9 @@ import { connection } from "next/server";
 import { ArrowRightIcon, PlusIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignPath } from "@/lib/campaign-paths";
+import { campaignStatusVariant } from "@/lib/business-format";
+import { campaignStatusLabel } from "@/lib/labels";
 import {
   listBusinessCampaignApplicationGroups,
 } from "@/services/business-application.service";
@@ -185,7 +188,7 @@ function CampaignApplicationGroup({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <Link
-            href={`/business/campaigns/${campaign.id}/applications`}
+            href={campaignPath(campaign, "applications")}
             className="text-sm font-medium hover:underline"
           >
             {campaign.title}
@@ -199,8 +202,8 @@ function CampaignApplicationGroup({
           <Badge variant="secondary" className="text-xs">
             {applicationCount}
           </Badge>
-          <Badge variant="outline" className="text-xs capitalize">
-            {campaign.status}
+          <Badge variant={campaignStatusVariant(campaign.status)} className="text-xs">
+            {campaignStatusLabel(campaign.status)}
           </Badge>
         </div>
       </div>

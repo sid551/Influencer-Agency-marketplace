@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { signup, type AuthFormState } from "@/app/(auth)/actions";
+import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -239,6 +240,26 @@ export function SignupForm() {
           </Button>
         </form>
       </Form>
+
+      <div className="mt-6">
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            or
+          </span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <div className="mt-4">
+          <GoogleAuthButton
+            role={selectedRole ?? initialRole}
+            next={next}
+            label="Sign up with Google"
+          />
+        </div>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          We&apos;ll use the account type you selected above.
+        </p>
+      </div>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}

@@ -4,6 +4,9 @@ import { connection } from "next/server";
 import { MessageSquareIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignMessagesPath } from "@/lib/campaign-paths";
+import { campaignStatusVariant } from "@/lib/business-format";
+import { campaignStatusLabel } from "@/lib/labels";
 import { listBusinessMessageCampaigns } from "@/services/message.service";
 import type { BusinessMessageCampaign } from "@/types/business.types";
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +78,7 @@ function MessagesView({ campaigns }: { campaigns: BusinessMessageCampaign[] }) {
           {campaigns.map((campaign) => (
             <Link
               key={campaign.id}
-              href={`/business/messages/campaigns/${campaign.id}`}
+              href={campaignMessagesPath(campaign)}
               className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Card className="transition-colors hover:bg-muted/50">
@@ -86,15 +89,18 @@ function MessagesView({ campaigns }: { campaigns: BusinessMessageCampaign[] }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-medium">{campaign.title}</p>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {campaign.status}
+                      <Badge
+                        variant={campaignStatusVariant(campaign.status)}
+                        className="text-xs"
+                      >
+                        {campaignStatusLabel(campaign.status)}
                       </Badge>
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {campaign.applicationCount} application
                       {campaign.applicationCount === 1 ? "" : "s"} ·{" "}
-                      {campaign.acceptedCount} accepted creator
-                      {campaign.acceptedCount === 1 ? "" : "s"}
+                      {campaign.acceptedCount} creator
+                      {campaign.acceptedCount === 1 ? "" : "s"} in talks
                     </p>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {campaign.lastMessage?.body ?? "No messages yet."}

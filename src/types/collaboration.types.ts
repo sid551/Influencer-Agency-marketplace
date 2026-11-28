@@ -133,6 +133,7 @@ export interface CollaborationDetail extends CollaborationListItem {
  *  the business's goals (brief, deliverables, budget) next to the messages. */
 export interface ConversationCampaign {
   id: string;
+  slug: string;
   title: string;
   description: string;
   budget_min: number | null;

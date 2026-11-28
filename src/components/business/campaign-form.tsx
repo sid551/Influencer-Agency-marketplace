@@ -1,21 +1,35 @@
 "use client";
 
-import { useActionState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useState,
+  type ChangeEvent,
+} from "react";
+import Image from "next/image";
 import { Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { CampaignFormDefaults } from "@/lib/campaign-form-defaults";
-import { label } from "@/lib/labels";
 import {
-  CAMPAIGN_PLATFORMS,
-} from "@/lib/validations/business";
+  SIMPLE_CAMPAIGN_STATUS_HELP,
+  SIMPLE_CAMPAIGN_STATUSES,
+  campaignStatusValueForChoice,
+  label,
+  simpleCampaignStatus,
+  simpleCampaignStatusLabel,
+  type SimpleCampaignStatus,
+} from "@/lib/labels";
+import {
+  CAMPAIGN_IMAGE_ACCEPT,
+  CAMPAIGN_IMAGE_ALT_MAX,
+  CAMPAIGN_IMAGE_MAX_BYTES,
+} from "@/lib/validations/campaign-image";
+import { CAMPAIGN_PLATFORMS } from "@/lib/validations/business";
 import { NICHE_OPTIONS } from "@/types/creator.types";
-import {
-  CAMPAIGN_STATUSES,
-  COLLABORATION_TYPES,
-} from "@/types/campaign.types";
+import { COLLABORATION_TYPES } from "@/types/campaign.types";
 import {
   EMPTY_FORM_STATE,
   type FormActionState,
@@ -34,6 +48,26 @@ export function CampaignForm({
   editing?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, EMPTY_FORM_STATE);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    defaultValues.image_url,
+  );
+  const [removeImage, setRemoveImage] = useState(false);
+  const [statusChoice, setStatusChoice] = useState<SimpleCampaignStatus>(
+    simpleCampaignStatus(defaultValues.status),
+  );
+
+  useEffect(() => {
+    if (!previewUrl?.startsWith("blob:")) return;
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setRemoveImage(false);
+    setPreviewUrl(
+      file ? URL.createObjectURL(file) : (defaultValues.image_url ?? null),
+    );
+  }
 
   return (
     <form action={formAction} className="grid gap-5" noValidate>
@@ -57,6 +91,72 @@ export function CampaignForm({
         <label htmlFor="description" className="text-sm font-medium">Description</label>
         <Textarea id="description" name="description" rows={5} defaultValue={defaultValues.description} required />
         <FieldError messages={state.fieldErrors.description} />
+      </div>
+
+      <div className="grid gap-3 rounded-2xl border border-border bg-card/60 p-4">
+        <div className="grid gap-2">
+          <label htmlFor="campaign_image" className="text-sm font-medium">
+            Campaign photo (optional)
+          </label>
+          <Input
+            id="campaign_image"
+            name="campaign_image"
+            type="file"
+            accept={CAMPAIGN_IMAGE_ACCEPT}
+            onChange={handleImageChange}
+            className="cursor-pointer"
+            aria-describedby="campaign-image-hint"
+          />
+          <p id="campaign-image-hint" className="text-xs text-muted-foreground">
+            JPEG, PNG or WebP up to {Math.round(CAMPAIGN_IMAGE_MAX_BYTES / 1024 / 1024)} MB.
+            Uploaded to Cloudinary and shown to creators.
+          </p>
+          <FieldError messages={state.fieldErrors.campaign_image} />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="image_alt" className="text-sm font-medium">
+            Image description (optional)
+          </label>
+          <Input
+            id="image_alt"
+            name="image_alt"
+            defaultValue={defaultValues.image_alt}
+            maxLength={CAMPAIGN_IMAGE_ALT_MAX}
+            placeholder="e.g. The summer collection being photographed"
+          />
+          <p className="text-xs text-muted-foreground">
+            Helps describe the photo for creators using screen readers.
+          </p>
+          <FieldError messages={state.fieldErrors.image_alt} />
+        </div>
+
+        {previewUrl && !removeImage ? (
+          <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-border bg-muted">
+            <Image
+              src={previewUrl}
+              alt={defaultValues.image_alt || `${defaultValues.title || "Campaign"} photo`}
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-cover"
+              unoptimized={previewUrl.startsWith("blob:")}
+            />
+          </div>
+        ) : null}
+
+        {editing && defaultValues.image_url ? (
+          <label className="flex w-fit items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="remove_image"
+              value="true"
+              checked={removeImage}
+              onChange={(event) => setRemoveImage(event.target.checked)}
+              className="size-4 accent-primary"
+            />
+            Remove current photo
+          </label>
+        ) : null}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
@@ -128,15 +228,36 @@ export function CampaignForm({
           <FieldError messages={state.fieldErrors.collaboration_type} />
         </div>
         <div className="grid gap-2">
-          <label htmlFor="status" className="text-sm font-medium">Status</label>
-          <select id="status" name="status" className={selectClass} defaultValue={defaultValues.status}>
-            {(editing ? CAMPAIGN_STATUSES : (["draft", "published"] as const)).map((status) => (
-              <option key={status} value={status}>{label(status)}</option>
+          <label htmlFor="status" className="text-sm font-medium">Campaign state</label>
+          <select
+            id="status"
+            name="status_choice"
+            className={selectClass}
+            value={statusChoice}
+            onChange={(event) =>
+              setStatusChoice(event.target.value as SimpleCampaignStatus)
+            }
+          >
+            {(editing
+              ? SIMPLE_CAMPAIGN_STATUSES
+              : (["draft", "live"] as const)
+            ).map((status) => (
+              <option key={status} value={status}>
+                {simpleCampaignStatusLabel(status)}
+              </option>
             ))}
           </select>
+          <input
+            type="hidden"
+            name="status"
+            value={campaignStatusValueForChoice(
+              statusChoice,
+              defaultValues.status,
+            )}
+            readOnly
+          />
           <p className="text-xs text-muted-foreground">
-            Draft: only you can see it. Open for applications: creators can
-            find and apply. You can publish later by editing the campaign.
+            {SIMPLE_CAMPAIGN_STATUS_HELP[statusChoice]}
           </p>
           <FieldError messages={state.fieldErrors.status} />
         </div>

@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignPath, campaignSlug } from "@/lib/campaign-paths";
 import {
   getBusinessCampaign,
   listCampaignNiches,
@@ -45,10 +46,13 @@ async function EditCampaignLoader({
   params: Promise<{ id: string }>;
 }) {
   await connection();
-  const { id } = await params;
+  const { id: reference } = await params;
   const { user } = await requireBusiness();
-  const campaign = await getBusinessCampaign(user.id, id);
+  const campaign = await getBusinessCampaign(user.id, reference);
   if (!campaign) notFound();
+  if (reference !== campaignSlug(campaign)) {
+    redirect(campaignPath(campaign, "edit"));
+  }
   const targetNiches = await listCampaignNiches(campaign.id);
 
   return (

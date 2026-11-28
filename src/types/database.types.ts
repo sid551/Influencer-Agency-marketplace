@@ -179,8 +179,12 @@ export type Database = {
           deliverables: string[];
           description: string;
           id: string;
+          image_alt: string | null;
+          image_public_id: string | null;
+          image_url: string | null;
           location: string | null;
           platforms: string[];
+          slug: string;
           status: string;
           title: string;
           updated_at: string;
@@ -198,8 +202,12 @@ export type Database = {
           deliverables?: string[];
           description: string;
           id?: string;
+          image_alt?: string | null;
+          image_public_id?: string | null;
+          image_url?: string | null;
           location?: string | null;
           platforms?: string[];
+          slug?: string | null;
           status?: string;
           title: string;
           updated_at?: string;
@@ -216,8 +224,12 @@ export type Database = {
           deliverables?: string[];
           description?: string;
           id?: string;
+          image_alt?: string | null;
+          image_public_id?: string | null;
+          image_url?: string | null;
           location?: string | null;
           platforms?: string[];
+          slug?: string | null;
           status?: string;
           title?: string;
           updated_at?: string;
@@ -975,6 +987,10 @@ export type Database = {
       };
     };
     Functions: {
+      apply_google_signup_role: {
+        Args: { p_role: string; p_started_at: string };
+        Returns: boolean;
+      };
       decline_creator_collaboration: {
         Args: { p_collaboration_id: string };
         Returns: boolean;
@@ -1002,7 +1018,11 @@ export type Database = {
           deliverables: string[];
           description: string;
           id: string;
+          image_alt: string | null;
+          image_public_id: string | null;
+          image_url: string | null;
           location: string | null;
+          slug: string;
           match_score: number;
           match_section: string;
           platforms: string[];

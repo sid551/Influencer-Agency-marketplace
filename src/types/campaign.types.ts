@@ -38,8 +38,8 @@ export const APPLICATION_STATUSES = [
 ] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
-/** Applications that have a negotiation thread. Finalized creators stay
- *  messageable after the business chooses a winner. */
+/** Applications that have a negotiation thread. Selected creators stay
+ *  messageable after the business finishes choosing creators. */
 export const MESSAGEABLE_APPLICATION_STATUSES = ["accepted", "finalized"] as const;
 
 /** Decisions a business may make on an application. Mirrors the database
@@ -64,6 +64,8 @@ export const BUSINESS_APPLICATION_TRANSITIONS: Record<
 /** Row type for public.campaigns. */
 export interface Campaign {
   id: string;
+  /** Stable URL-safe reference; the UUID id stays internal. */
+  slug: string;
   business_profile_id: string;
   title: string;
   description: string;
@@ -76,6 +78,10 @@ export interface Campaign {
   deliverables: string[];
   application_deadline: string | null;
   location: string | null;
+  /** Cloudinary asset reference; null when no photo was uploaded. */
+  image_url: string | null;
+  image_public_id: string | null;
+  image_alt: string | null;
   status: CampaignStatus;
   created_at: string;
   updated_at: string;
@@ -108,7 +114,13 @@ export interface CampaignApplication {
 export interface ApplicationWithCampaign extends CampaignApplication {
   campaign: Pick<
     Campaign,
-    "id" | "title" | "category" | "platforms" | "application_deadline" | "status"
+    | "id"
+    | "slug"
+    | "title"
+    | "category"
+    | "platforms"
+    | "application_deadline"
+    | "status"
   > | null;
 }
 

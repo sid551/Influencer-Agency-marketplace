@@ -16,6 +16,7 @@ function campaign(
 ): RecommendedCampaign {
   return {
     id,
+    slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-test1234`,
     business_profile_id: "business-1",
     title,
     description: "A short campaign description.",
@@ -28,6 +29,9 @@ function campaign(
     deliverables: ["1 reel"],
     application_deadline: null,
     location: null,
+    image_url: null,
+    image_public_id: null,
+    image_alt: null,
     status: "published",
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",

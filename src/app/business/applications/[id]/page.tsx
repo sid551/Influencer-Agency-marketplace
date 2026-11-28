@@ -4,10 +4,12 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignPath } from "@/lib/campaign-paths";
 import {
   applicationStatusVariant,
   formatPrice,
 } from "@/lib/business-format";
+import { applicationStatusLabel } from "@/lib/labels";
 import { uuidSchema } from "@/lib/validations/ids";
 import { getBusinessApplication } from "@/services/business-application.service";
 import { ApplicationReviewActions } from "@/components/business/application-review-actions";
@@ -64,8 +66,8 @@ async function ApplicationLoader({
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <Link
         href={
-          application.campaign_id
-            ? `/business/campaigns/${application.campaign_id}/applications`
+          application.campaign
+            ? campaignPath(application.campaign, "applications")
             : "/business/campaigns"
         }
         className="text-sm text-muted-foreground hover:text-foreground"
@@ -83,9 +85,9 @@ async function ApplicationLoader({
         </div>
         <Badge
           variant={applicationStatusVariant(application.status)}
-          className="w-fit capitalize"
+          className="w-fit"
         >
-          {application.status}
+          {applicationStatusLabel(application.status)}
         </Badge>
       </div>
 
@@ -143,8 +145,8 @@ async function ApplicationLoader({
             <CardHeader>
               <CardTitle>Review</CardTitle>
               <CardDescription>
-                Accepting opens a negotiation with this creator. Finalize one
-                creator after you agree on the work and price.
+                Choose one clear next step. You can message the creator before
+                making a final decision.
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -73,7 +73,7 @@ export default function BusinessLayout({
   ];
 
   return (
-    <div className="min-h-screen lg:pl-72">
+    <div className="min-h-screen lg:flex">
       <MobileNavShell
         homeHref="/business"
         brandLabel="Business Marketplace"
@@ -88,7 +88,7 @@ export default function BusinessLayout({
           }
         />
       </MobileNavShell>
-      <main className="flex-1">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
     </div>
   );
 }

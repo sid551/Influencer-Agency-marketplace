@@ -1,5 +1,6 @@
 import "server-only";
 
+import { campaignLookupColumn } from "@/lib/campaign-paths";
 import { createClient } from "@/lib/supabase/server";
 import type { ServiceResult } from "./profile.service";
 import type {
@@ -32,9 +33,9 @@ export async function listDiscoverableCampaigns(): Promise<Campaign[]> {
   return (data as Campaign[]) ?? [];
 }
 
-/** A single campaign by ID, joined with its business for display. */
-export async function getCampaignById(
-  campaignId: string,
+/** A single campaign by slug or legacy UUID, joined with its business. */
+export async function getCampaignByReference(
+  reference: string,
 ): Promise<CampaignWithBusiness | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -47,7 +48,7 @@ export async function getCampaignById(
         industry
       )`,
     )
-    .eq("id", campaignId)
+    .eq(campaignLookupColumn(reference), reference)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -76,6 +77,7 @@ export async function listOwnApplications(
       `*,
       campaigns (
         id,
+        slug,
         title,
         category,
         platforms,

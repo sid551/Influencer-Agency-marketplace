@@ -389,7 +389,7 @@ values
     'application_status',
     'New application received',
     'Rahul Verma applied to Summer Fashion Reel Campaign.',
-    '/business/campaigns/dddddddd-0000-4000-8000-000000000001/applications',
+    '/business/campaigns/' || (select slug from public.campaigns where id = 'dddddddd-0000-4000-8000-000000000001') || '/applications',
     null,
     now() - interval '3 hours'),
    ('50505050-0000-4000-8000-000000000005',

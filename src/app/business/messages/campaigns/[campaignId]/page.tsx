@@ -1,14 +1,22 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeftIcon, MessageSquareIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import {
+  campaignMessagesPath,
+  campaignPath,
+  campaignSlug,
+} from "@/lib/campaign-paths";
 import { applicationStatusVariant, formatDate } from "@/lib/business-format";
 import { formatMoney } from "@/lib/money";
-import { applicationStatusLabel } from "@/lib/labels";
-import { uuidSchema } from "@/lib/validations/ids";
+import {
+  applicationConversationFilterFromValue,
+  applicationStatusLabel,
+  SIMPLE_APPLICATION_FILTERS,
+} from "@/lib/labels";
 import {
   getBusinessCampaign,
 } from "@/services/business-campaign.service";
@@ -19,7 +27,6 @@ import type {
   BusinessCampaignApplicantThread,
 } from "@/types/business.types";
 import {
-  APPLICATION_STATUSES,
   MESSAGEABLE_APPLICATION_STATUSES,
   type ApplicationStatus,
 } from "@/types/campaign.types";
@@ -55,24 +62,27 @@ async function CampaignMessagesLoader({
   searchParams: Promise<{ status?: string }>;
 }) {
   await connection();
-  const { campaignId } = await params;
+  const { campaignId: reference } = await params;
   const query = await searchParams;
-  if (!uuidSchema.safeParse(campaignId).success) notFound();
-
   const { user } = await requireBusiness();
-  const campaign = await getBusinessCampaign(user.id, campaignId);
+  const campaign = await getBusinessCampaign(user.id, reference);
   if (!campaign) notFound();
 
-  const status = parseStatus(query.status);
+  // Keep shared UUID bookmarks working without leaving them in the address bar.
+  if (reference !== campaignSlug(campaign)) {
+    redirect(campaignMessagesPath(campaign));
+  }
+
+  const status = applicationConversationFilterFromValue(query.status);
   const applicants = await listCampaignApplicantConversations(
     user.id,
-    campaignId,
+    campaign.id,
     status,
   );
 
   return (
     <CampaignMessagesView
-      campaignId={campaignId}
+      campaignRef={campaignSlug(campaign)}
       campaignTitle={campaign.title}
       applicants={applicants}
       status={status}
@@ -80,28 +90,17 @@ async function CampaignMessagesLoader({
   );
 }
 
-function parseStatus(value: string | undefined): ApplicationStatus | "all" {
-  if (value === "all") return "all";
-  if (APPLICATION_STATUSES.includes(value as ApplicationStatus)) {
-    return value as ApplicationStatus;
-  }
-  return "accepted";
-}
-
-const FILTERS: Array<{ value: ApplicationStatus | "all"; label: string }> = [
-  { value: "accepted", label: "In negotiation" },
-  { value: "finalized", label: "Selected" },
-  { value: "all", label: "All applicants" },
-  { value: "pending", label: "Pending review" },
-];
+const FILTERS = SIMPLE_APPLICATION_FILTERS.filter(
+  (filter) => filter.value !== "closed",
+);
 
 function CampaignMessagesView({
-  campaignId,
+  campaignRef,
   campaignTitle,
   applicants,
   status,
 }: {
-  campaignId: string;
+  campaignRef: string;
   campaignTitle: string;
   applicants: BusinessCampaignApplicantThread[];
   status: ApplicationStatus | "all";
@@ -118,8 +117,8 @@ function CampaignMessagesView({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{campaignTitle}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Creators who applied to this campaign. Accepted creators have a
-          message thread.
+          Creators who applied to this campaign. Open a conversation when you
+          are ready to work together.
         </p>
       </div>
 
@@ -132,7 +131,7 @@ function CampaignMessagesView({
             variant={filter.value === status ? "default" : "outline"}
           >
             <Link
-              href={`/business/messages/campaigns/${campaignId}?status=${filter.value}`}
+              href={`${campaignMessagesPath({ id: campaignRef })}?status=${filter.value}`}
             >
               {filter.label}
             </Link>
@@ -145,14 +144,16 @@ function CampaignMessagesView({
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center text-sm text-muted-foreground">
             <p>
               {status === "accepted"
-                ? "No creators are in negotiation for this campaign yet."
+                ? "No creators are in talks for this campaign yet."
                 : status === "pending"
-                  ? "No applications are waiting for review."
-                  : "No applicants with this status."}
+                  ? "No new applications are waiting for review."
+                  : status === "finalized"
+                    ? "No creators have been selected yet."
+                    : "No applicants in this group."}
             </p>
             <Button asChild variant="outline" size="sm">
               <Link
-                href={`/business/campaigns/${campaignId}/applications`}
+                href={campaignPath({ id: campaignRef }, "applications")}
               >
                 Review applications
               </Link>

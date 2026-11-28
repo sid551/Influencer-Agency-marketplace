@@ -28,7 +28,7 @@ import {
 
 /** Campaign join shared by every conversation header query. */
 const CAMPAIGN_COLUMNS =
-  "campaigns ( id, title, description, budget_min, budget_max, currency, deliverables, platforms )";
+  "campaigns ( id, slug, title, description, budget_min, budget_max, currency, deliverables, platforms )";
 
 interface ThreadCollaboration {
   id: string;
@@ -425,6 +425,7 @@ export async function listBusinessMessageCampaigns(
 
     return {
       id: campaign.id,
+      slug: campaign.slug,
       title: campaign.title,
       status: campaign.status,
       applicationCount: campaignApplications.length,

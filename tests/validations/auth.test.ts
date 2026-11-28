@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  encodeGoogleAuthIntent,
+  googleAuthCookieOptions,
+  googleRoleSchema,
+  parseGoogleAuthIntent,
+} from "@/lib/auth/google";
+import {
   emailOtpTypeSchema,
   loginSchema,
   resetPasswordSchema,
@@ -104,5 +110,64 @@ describe("sanitizeNextPath", () => {
     expect(sanitizeNextPath(null)).toBeNull();
     expect(sanitizeNextPath(42)).toBeNull();
     expect(sanitizeNextPath(["/creator"])).toBeNull();
+  });
+});
+
+describe("Google auth intent", () => {
+  const now = 1_800_000_000_000;
+
+  it("round-trips a valid role and same-origin return path", () => {
+    const raw = encodeGoogleAuthIntent({
+      role: "business",
+      next: "/business/campaigns?status=live",
+      issuedAt: now,
+    });
+    expect(parseGoogleAuthIntent(raw, now)).toEqual({
+      role: "business",
+      next: "/business/campaigns?status=live",
+      issuedAt: now,
+    });
+  });
+
+  it("only accepts creator or business roles", () => {
+    expect(googleRoleSchema.safeParse("admin").success).toBe(false);
+    expect(
+      parseGoogleAuthIntent(
+        JSON.stringify({ role: "admin", next: null, issuedAt: now }),
+        now,
+      ),
+    ).toBeNull();
+  });
+
+  it("rejects expired, future and malformed intents", () => {
+    const raw = encodeGoogleAuthIntent({ role: "creator", next: null, issuedAt: now });
+    expect(parseGoogleAuthIntent(raw, now + 11 * 60_000)).toBeNull();
+    expect(parseGoogleAuthIntent(raw, now - 2 * 60_000)).toBeNull();
+    expect(parseGoogleAuthIntent("not-json", now)).toBeNull();
+  });
+
+  it("drops open redirects carried in the cookie", () => {
+    const raw = JSON.stringify({
+      role: "creator",
+      next: "//evil.example",
+      issuedAt: now,
+    });
+    expect(parseGoogleAuthIntent(raw, now)).toMatchObject({
+      role: "creator",
+      next: null,
+    });
+  });
+
+  it("keeps the intent cookie httpOnly and secure only over HTTPS", () => {
+    expect(googleAuthCookieOptions("https://example.com")).toMatchObject({
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+    });
+    expect(googleAuthCookieOptions("http://localhost:3000")).toMatchObject({
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
   });
 });

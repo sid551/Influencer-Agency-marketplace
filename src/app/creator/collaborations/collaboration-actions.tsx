@@ -55,24 +55,36 @@ function useActionToast(state: CollaborationActionState) {
 }
 
 const STATUS_LABELS: Record<CollaborationStatus, string> = {
-  negotiating: "Back to negotiating",
-  agreement_pending: "Send for agreement",
-  active: "Start collaboration",
+  negotiating: "Back to discussing",
+  agreement_pending: "Confirm terms",
+  active: "Start work",
   submitted: "Submit work",
   revision_requested: "Resubmit work",
-  approved: "Mark as complete",
-  completed: "Mark as complete",
+  approved: "Finish work",
+  completed: "Finish work",
   cancelled: "Cancel collaboration",
-  disputed: "Report a dispute",
+  disputed: "Report a problem",
+};
+
+/** Cancelling is handled by the dedicated decline action, never as a next step. */
+type NextAction = Exclude<CollaborationStatus, "cancelled">;
+
+/** The next step shown as the primary action for each collaboration state. */
+const PRIMARY_NEXT: Partial<Record<CollaborationStatus, NextAction>> = {
+  negotiating: "agreement_pending",
+  agreement_pending: "active",
+  active: "submitted",
+  revision_requested: "submitted",
+  approved: "completed",
 };
 
 const CONFIRM_MESSAGES: Partial<Record<CollaborationStatus, string>> = {
-  negotiating: "Go back to negotiating terms? The agreement will need to be sent again.",
-  completed: "Mark this collaboration as complete? Make sure all work has been delivered.",
-  disputed: "Report a dispute? The business will be notified and work will pause.",
+  negotiating: "Go back to discussing terms? The agreement will need to be sent again.",
+  completed: "Finish this collaboration? Make sure all work has been delivered.",
+  disputed: "Report a problem? The business will be notified and work will pause.",
 };
 
-/** Buttons for the status changes this creator may request. */
+/** Shows one clear next step; other transitions stay behind "More options". */
 export function CollaborationStatusActions({
   collaborationId,
   status,
@@ -86,23 +98,51 @@ export function CollaborationStatusActions({
   const transitions = CREATOR_COLLABORATION_TRANSITIONS[status].filter(
     (next) => next !== "cancelled",
   );
-  if (!transitions?.length) {
+  if (!transitions.length) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No further actions are available for this collaboration.
-      </p>
+      <p className="text-sm text-muted-foreground">Nothing else is needed here.</p>
     );
   }
 
+  const primary = PRIMARY_NEXT[status];
+  const primaryNext = primary && transitions.includes(primary) ? primary : null;
+  const secondary = transitions.filter((next) => next !== primaryNext);
+  const actionLabel = (next: CollaborationStatus) =>
+    next === "submitted" && status === "revision_requested"
+      ? "Resubmit work"
+      : STATUS_LABELS[next];
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {transitions.map((next) => (
+    <div className="grid gap-3">
+      {primaryNext ? (
         <StatusButton
-          key={next}
           collaborationId={collaborationId}
-          next={next}
+          next={primaryNext}
+          label={actionLabel(primaryNext)}
         />
-      ))}
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Waiting for the business to review your work.
+        </p>
+      )}
+      {secondary.length ? (
+        <details className="text-xs text-muted-foreground">
+          <summary className="w-fit cursor-pointer hover:text-foreground">
+            More options
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {secondary.map((next) => (
+              <StatusButton
+                key={next}
+                collaborationId={collaborationId}
+                next={next}
+                label={actionLabel(next)}
+                variant={next === "disputed" ? "destructive" : "ghost"}
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -110,9 +150,13 @@ export function CollaborationStatusActions({
 function StatusButton({
   collaborationId,
   next,
+  label,
+  variant = "default",
 }: {
   collaborationId: string;
   next: CollaborationStatus;
+  label: string;
+  variant?: "default" | "ghost" | "destructive";
 }) {
   const [state, formAction, isPending] = useActionState(
     updateCollaborationStatusAction.bind(null, collaborationId, next),
@@ -120,7 +164,6 @@ function StatusButton({
   );
   useActionToast(state);
 
-  const destructive = next === "cancelled" || next === "disputed";
   return (
     <form
       action={formAction}
@@ -129,14 +172,9 @@ function StatusButton({
         if (message && !window.confirm(message)) event.preventDefault();
       }}
     >
-      <Button
-        type="submit"
-        size="sm"
-        variant={destructive ? "outline" : "default"}
-        disabled={isPending}
-      >
+      <Button type="submit" size="sm" variant={variant} disabled={isPending}>
         {isPending ? <Loader2Icon className="size-4 animate-spin" /> : null}
-        {STATUS_LABELS[next]}
+        {label}
       </Button>
     </form>
   );

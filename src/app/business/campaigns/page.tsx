@@ -5,11 +5,13 @@ import { redirect } from "next/navigation";
 import { PlusIcon } from "lucide-react";
 
 import { requireBusiness } from "@/lib/auth/session";
+import { campaignPath } from "@/lib/campaign-paths";
 import {
   listBusinessCampaigns,
 } from "@/services/business-campaign.service";
 import { getOwnBusinessProfile } from "@/services/business-profile.service";
-import { label } from "@/lib/labels";
+import { campaignStatusVariant } from "@/lib/business-format";
+import { campaignStatusLabel } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,7 +101,7 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
     <li className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <Link
-          href={`/business/campaigns/${campaign.id}/edit`}
+          href={campaignPath(campaign, "edit")}
           className="font-medium hover:underline"
         >
           {campaign.title}
@@ -110,14 +112,16 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <Badge variant="outline">{label(campaign.status)}</Badge>
+        <Badge variant={campaignStatusVariant(campaign.status)}>
+          {campaignStatusLabel(campaign.status)}
+        </Badge>
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/business/campaigns/${campaign.id}/applications`}>
-            Applications
+          <Link href={campaignPath(campaign, "applications")}>
+            Review
           </Link>
         </Button>
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/business/campaigns/${campaign.id}/edit`}>Edit</Link>
+          <Link href={campaignPath(campaign, "edit")}>Edit</Link>
         </Button>
       </div>
     </li>
