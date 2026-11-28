@@ -14,7 +14,7 @@ type MobileNavShellProps = {
 
 /**
  * Responsive frame for the app sidebar. The same server-rendered sidebar
- * content slides in as a drawer on small screens and stays fixed on desktop.
+ * content slides in as a drawer on small screens and stays pinned on desktop.
  */
 export function MobileNavShell({
   homeHref,
@@ -104,7 +104,7 @@ export function MobileNavShell({
         aria-label={`${workspaceLabel} navigation`}
         onClickCapture={closeOnNavigation}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[calc(100vw-3rem)] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 lg:z-30 lg:shadow-none",
+          "fixed inset-y-0 left-0 z-50 flex w-72 max-w-[calc(100vw-3rem)] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:z-30 lg:shrink-0 lg:self-start lg:shadow-none",
           open ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
         )}
       >
