@@ -3,7 +3,10 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 
 import { requireBusiness } from "@/lib/auth/session";
-import { getBusinessCampaign } from "@/services/business-campaign.service";
+import {
+  getBusinessCampaign,
+  listCampaignNiches,
+} from "@/services/business-campaign.service";
 import { campaignFormDefaults } from "@/lib/campaign-form-defaults";
 import { CampaignForm } from "@/components/business/campaign-form";
 import {
@@ -46,6 +49,7 @@ async function EditCampaignLoader({
   const { user } = await requireBusiness();
   const campaign = await getBusinessCampaign(user.id, id);
   if (!campaign) notFound();
+  const targetNiches = await listCampaignNiches(campaign.id);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10">
@@ -65,7 +69,7 @@ async function EditCampaignLoader({
         <CardContent>
           <CampaignForm
             action={updateBusinessCampaignAction}
-            defaultValues={campaignFormDefaults(campaign)}
+            defaultValues={campaignFormDefaults(campaign, targetNiches)}
             editing
           />
         </CardContent>

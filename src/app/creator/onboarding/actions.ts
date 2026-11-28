@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { requireCreator } from "@/lib/auth/session";
+import { setOwnCreatorNiches } from "@/services/creator-niche.service";
 import {
   updateOwnCreatorProfile,
   getOwnCreatorProfile,
@@ -125,13 +126,25 @@ export async function saveOnboardingStep(input: {
     return { ...EMPTY_STATE, ok: true };
   }
 
-  // --- Fields owned by public.creator_profiles (steps 5–8, 10) ---
+  // Step 6 writes relational niche rows (plus the legacy display column).
+  if (step === 6) {
+    const savedNiches = await setOwnCreatorNiches(user.id, {
+      primary: values.primaryNiche,
+      niches: values.niches,
+    });
+    if (!savedNiches.ok) {
+      return { ...EMPTY_STATE, message: savedNiches.message };
+    }
+    const failure = await advance();
+    if (failure) return failure;
+    return { ...EMPTY_STATE, ok: true };
+  }
+
+  // --- Fields owned by public.creator_profiles (steps 5, 7, 8, 10) ---
   const creatorPatch: CreatorProfilePatch | null =
     step === 5
       ? { bio: values.bio.trim(), onboarding_step: nextStep }
-      : step === 6
-        ? { niches: [...values.niches], onboarding_step: nextStep }
-        : step === 7
+      : step === 7
           ? { languages: [...values.languages], onboarding_step: nextStep }
           : step === 8
             ? { content_types: [...values.contentTypes], onboarding_step: nextStep }

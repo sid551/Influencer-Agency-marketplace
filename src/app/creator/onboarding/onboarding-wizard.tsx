@@ -469,6 +469,14 @@ function ReviewStep({ values, profile, socialAccounts, onEdit }: ReviewStepProps
 
         <ReviewSection title="Topics" editStep={6} onEdit={onEdit}>
           {tags(values.niches)}
+          {values.primaryNiche ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Primary niche:{" "}
+              <span className="font-medium capitalize text-foreground">
+                {values.primaryNiche.replace(/_/g, " ")}
+              </span>
+            </p>
+          ) : null}
         </ReviewSection>
 
         <ReviewSection title="Languages" editStep={7} onEdit={onEdit}>

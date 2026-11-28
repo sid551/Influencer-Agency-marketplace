@@ -2,6 +2,7 @@
 
 import { requireCreator } from "@/lib/auth/session";
 import { updateOwnProfile } from "@/services/profile.service";
+import { setOwnCreatorNiches } from "@/services/creator-niche.service";
 import {
   profileEditSchema,
 } from "@/lib/validations/profile";
@@ -39,8 +40,10 @@ export async function updateProfile(
   formData: FormData,
 ): Promise<ProfileEditActionState> {
   const raw = Object.fromEntries(formData.entries());
-
-  const parsed = profileEditSchema.safeParse(raw);
+  const parsed = profileEditSchema.safeParse({
+    ...raw,
+    niches: formData.getAll("niches"),
+  });
   if (!parsed.success) {
     return { ...EMPTY_STATE, fieldErrors: fieldErrorsOf(parsed.error) };
   }
@@ -60,6 +63,14 @@ export async function updateProfile(
   const saved = await updateOwnProfile(user.id, profilePatch);
   if (!saved.ok) {
     return { ...EMPTY_STATE, message: saved.message };
+  }
+
+  const savedNiches = await setOwnCreatorNiches(user.id, {
+    primary: parsed.data.primaryNiche,
+    niches: parsed.data.niches,
+  });
+  if (!savedNiches.ok) {
+    return { ...EMPTY_STATE, message: savedNiches.message };
   }
 
   return { ...EMPTY_STATE, ok: true, message: "Profile updated." };

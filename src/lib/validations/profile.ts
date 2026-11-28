@@ -1,11 +1,21 @@
 import * as z from "zod";
 import { optionalHttpUrlSchema } from "@/lib/validations/url";
+import { NICHE_OPTIONS } from "@/types/creator.types";
 
 /**
  * Profile edit validation. Mirrors the column-level UPDATE grant on
- * public.profiles (full_name, username, avatar_url, city, state, phone).
- * Nothing else may be changed by the owner.
+ * public.profiles (full_name, username, avatar_url, city, state, phone)
+ * plus the creator's relational niche set. Nothing else may be changed
+ * by the owner.
  */
+
+const nicheArray = z
+  .array(z.enum(NICHE_OPTIONS))
+  .min(1, { error: "Pick at least one niche." })
+  .max(5, { error: "Pick at most 5 niches." })
+  .refine((values) => new Set(values).size === values.length, {
+    error: "Remove duplicate niches before saving.",
+  });
 
 export const profileEditSchema = z.object({
   fullName: z
@@ -39,6 +49,13 @@ export const profileEditSchema = z.object({
     ],
     { error: "Enter a valid phone number." },
   ).optional(),
+  niches: nicheArray,
+  primaryNiche: z.enum(NICHE_OPTIONS, {
+    error: "Choose a primary niche.",
+  }),
+}).refine((values) => values.niches.includes(values.primaryNiche), {
+  path: ["primaryNiche"],
+  error: "Your primary niche must be one of your selected niches.",
 });
 
 export type ProfileEditValues = z.infer<typeof profileEditSchema>;

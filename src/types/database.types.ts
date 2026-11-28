@@ -132,6 +132,40 @@ export type Database = {
           },
         ];
       };
+      campaign_niches: {
+        Row: {
+          campaign_id: string;
+          created_at: string;
+          niche_slug: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          campaign_id: string;
+          created_at?: string;
+          niche_slug: string;
+        };
+        Update: {
+          campaign_id?: string;
+          created_at?: string;
+          niche_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "campaign_niches_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaign_niches_niche_slug_fkey";
+            columns: ["niche_slug"];
+            isOneToOne: false;
+            referencedRelation: "niches";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
       campaigns: {
         Row: {
           application_deadline: string | null;
@@ -332,6 +366,43 @@ export type Database = {
           },
         ];
       };
+      creator_niches: {
+        Row: {
+          creator_profile_id: string;
+          created_at: string;
+          is_primary: boolean;
+          niche_slug: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          creator_profile_id: string;
+          created_at?: string;
+          is_primary?: boolean;
+          niche_slug: string;
+        };
+        Update: {
+          creator_profile_id?: string;
+          created_at?: string;
+          is_primary?: boolean;
+          niche_slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "creator_niches_creator_profile_id_fkey";
+            columns: ["creator_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "creator_profiles";
+            referencedColumns: ["profile_id"];
+          },
+          {
+            foreignKeyName: "creator_niches_niche_slug_fkey";
+            columns: ["niche_slug"];
+            isOneToOne: false;
+            referencedRelation: "niches";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
       creator_profiles: {
         Row: {
           bio: string | null;
@@ -489,6 +560,28 @@ export type Database = {
           },
         ];
       };
+      niches: {
+        Row: {
+          created_at: string;
+          name: string;
+          sort_order: number;
+          slug: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          name: string;
+          sort_order?: number;
+          slug: string;
+        };
+        Update: {
+          created_at?: string;
+          name?: string;
+          sort_order?: number;
+          slug?: string;
+        };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           body: string | null;
@@ -632,6 +725,37 @@ export type Database = {
           username?: string | null;
         };
         Relationships: [];
+      };
+      related_niches: {
+        Row: {
+          niche_a: string;
+          niche_b: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          niche_a: string;
+          niche_b: string;
+        };
+        Update: {
+          niche_a?: string;
+          niche_b?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "related_niches_niche_a_fkey";
+            columns: ["niche_a"];
+            isOneToOne: false;
+            referencedRelation: "niches";
+            referencedColumns: ["slug"];
+          },
+          {
+            foreignKeyName: "related_niches_niche_b_fkey";
+            columns: ["niche_b"];
+            isOneToOne: false;
+            referencedRelation: "niches";
+            referencedColumns: ["slug"];
+          },
+        ];
       };
       reviews: {
         Row: {
@@ -863,6 +987,31 @@ export type Database = {
       reject_accepted_application: {
         Args: { p_application_id: string };
         Returns: boolean;
+      };
+      recommend_creator_campaigns: {
+        Args: { p_section?: string | null; p_limit?: number; p_offset?: number };
+        Returns: {
+          application_deadline: string | null;
+          budget_max: number | null;
+          budget_min: number | null;
+          business_profile_id: string;
+          category: string;
+          collaboration_type: string;
+          created_at: string;
+          currency: string;
+          deliverables: string[];
+          description: string;
+          id: string;
+          location: string | null;
+          match_score: number;
+          match_section: string;
+          platforms: string[];
+          status: string;
+          target_niches: string[];
+          title: string;
+          total_count: number;
+          updated_at: string;
+        }[];
       };
     };
     Enums: {

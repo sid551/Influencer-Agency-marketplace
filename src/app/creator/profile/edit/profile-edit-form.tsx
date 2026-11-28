@@ -20,7 +20,18 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { NICHE_OPTIONS } from "@/types/creator.types";
+import { label as labelFor } from "@/lib/labels";
+import { cn } from "cn";
 import {
   Form,
   FormControl,
@@ -53,10 +64,30 @@ export function ProfileEditForm({
 
   // The city options follow the saved state (saved earlier as free text).
   const selectedState = useWatch({ control: form.control, name: "state" });
+  const niches = useWatch({ control: form.control, name: "niches" });
+  const currentPrimary = useWatch({ control: form.control, name: "primaryNiche" });
   const cityOptions = useMemo(
     () => citiesForState(selectedState),
     [selectedState],
   );
+
+  function toggleNiche(slug: ProfileEditValues["niches"][number], checked: boolean) {
+    const next = checked
+      ? [...niches.filter((item) => item !== slug), slug]
+      : niches.filter((item) => item !== slug);
+
+    form.setValue("niches", next, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (!next.includes(currentPrimary)) {
+      form.setValue("primaryNiche", (next[0] ?? "") as ProfileEditValues["primaryNiche"], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }
 
   // Server-side validation errors should appear next to the field, not
   // disappear into a generic banner.
@@ -83,6 +114,10 @@ export function ProfileEditForm({
       formData.append("city", values.city ?? "");
       formData.append("state", values.state ?? "");
       formData.append("phone", values.phone ?? "");
+      formData.append("primaryNiche", values.primaryNiche);
+      for (const niche of values.niches) {
+        formData.append("niches", niche);
+      }
       await formAction(formData);
     });
   }
@@ -263,6 +298,86 @@ export function ProfileEditForm({
                         ? `Cities in ${selectedState}.`
                         : "Choose your state first."}
                     </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Content niches</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-5">
+              <FormField
+                control={form.control}
+                name="niches"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your niches</FormLabel>
+                    <FormDescription>
+                      Pick up to 5 topics you create about. These drive your
+                      campaign recommendations.
+                    </FormDescription>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {NICHE_OPTIONS.map((option) => {
+                        const checked = field.value.includes(option);
+                        const atLimit = !checked && field.value.length >= 5;
+                        return (
+                          <label
+                            key={option}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-2 rounded-2xl border p-2.5 text-sm transition-colors hover:bg-muted",
+                              checked ? "border-primary bg-primary/5" : "border-border",
+                              atLimit && "cursor-not-allowed opacity-50",
+                            )}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              disabled={atLimit}
+                              onCheckedChange={(value) => toggleNiche(option, value === true)}
+                            />
+                            <span className="leading-tight">{labelFor(option)}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {field.value.length}/5 selected
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="primaryNiche"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary niche</FormLabel>
+                    <FormDescription>
+                      Your main category — it gets the strongest match weight.
+                    </FormDescription>
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                      disabled={niches.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Choose your primary niche" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {niches.map((slug) => (
+                          <SelectItem key={slug} value={slug}>
+                            {labelFor(slug)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

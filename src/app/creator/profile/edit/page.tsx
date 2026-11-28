@@ -2,7 +2,9 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 
 import { requireCreator } from "@/lib/auth/session";
+import { getOwnCreatorNiches } from "@/services/creator-niche.service";
 import { ProfileEditForm } from "./profile-edit-form";
+import type { ProfileEditValues } from "@/lib/validations/profile";
 
 export const metadata = { title: "Edit profile" };
 
@@ -24,7 +26,8 @@ export default function ProfileEditPage() {
 
 async function ProfileEditLoader() {
   await connection();
-  const { profile } = await requireCreator();
+  const { user, profile } = await requireCreator();
+  const { primary, niches } = await getOwnCreatorNiches(user.id);
 
   return (
     <ProfileEditForm
@@ -35,6 +38,8 @@ async function ProfileEditLoader() {
         city: profile.city ?? "",
         state: profile.state ?? "",
         phone: profile.phone ?? "",
+        niches,
+        primaryNiche: primary as ProfileEditValues["primaryNiche"],
       }}
     />
   );

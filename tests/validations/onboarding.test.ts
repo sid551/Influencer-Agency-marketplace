@@ -47,10 +47,29 @@ describe("onboarding step schemas", () => {
   });
 
   it("enforces option whitelists and counts", () => {
-    expect(getStepSchema(6)!.safeParse({ niches: [NICHE_OPTIONS[0]] }).success).toBe(true);
-    expect(getStepSchema(6)!.safeParse({ niches: [] }).success).toBe(false);
-    expect(getStepSchema(6)!.safeParse({ niches: ["not-a-niche"] }).success).toBe(false);
-    expect(getStepSchema(6)!.safeParse({ niches: NICHE_OPTIONS.slice(0, 6) }).success).toBe(false);
+    expect(
+      getStepSchema(6)!.safeParse({
+        niches: [NICHE_OPTIONS[0]],
+        primaryNiche: NICHE_OPTIONS[0],
+      }).success,
+    ).toBe(true);
+    expect(getStepSchema(6)!.safeParse({ niches: [], primaryNiche: NICHE_OPTIONS[0] }).success).toBe(false);
+    expect(
+      getStepSchema(6)!.safeParse({ niches: ["not-a-niche"], primaryNiche: NICHE_OPTIONS[0] })
+        .success,
+    ).toBe(false);
+    expect(
+      getStepSchema(6)!.safeParse({
+        niches: NICHE_OPTIONS.slice(0, 6),
+        primaryNiche: NICHE_OPTIONS[0],
+      }).success,
+    ).toBe(false);
+    expect(
+      getStepSchema(6)!.safeParse({
+        niches: [NICHE_OPTIONS[0]],
+        primaryNiche: NICHE_OPTIONS[1],
+      }).success,
+    ).toBe(false);
     expect(getStepSchema(7)!.safeParse({ languages: [LANGUAGE_OPTIONS[0]] }).success).toBe(true);
     expect(getStepSchema(8)!.safeParse({ contentTypes: [CONTENT_TYPE_OPTIONS[0]] }).success).toBe(
       true,
